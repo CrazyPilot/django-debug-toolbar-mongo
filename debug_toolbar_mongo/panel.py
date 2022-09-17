@@ -9,7 +9,6 @@ from debug_toolbar.panels import Panel
 from django.views.debug import get_default_exception_reporter_filter
 get_safe_settings = get_default_exception_reporter_filter().get_safe_settings
 
-from debug_toolbar_mongo import operation_tracker
 from .tracker import QueryTracker
 
 _NAV_SUBTITLE_TPL = u'''
@@ -50,8 +49,6 @@ class MongoPanel(Panel):
     def process_request(self, request):
         QueryTracker.reset()  # сбрасываем старые данные перед новым запросом
         result = super().process_request(request)
-        # print('!! QueryTracker.save_last_refresh_query()')
-        QueryTracker.save_last_refresh_query()  # сохраняем данные последнего find
         return result
 
     def generate_stats(self, request, response):
