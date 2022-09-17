@@ -2,7 +2,7 @@ import functools
 import time
 import inspect
 import os
-import SocketServer
+import socketserver
 
 import django
 from django.conf import settings
