@@ -40,7 +40,10 @@ class MongoPanel(Panel):
         return 'MongoDB'
 
     def nav_subtitle(self):
-        return 'nav_subtitle here'
+        stats = self.get_stats()
+        count = len(stats['queries'])
+        time_total = sum(list(map(lambda i: i['time'], stats['queries'])))
+        return f'{count} queries in {round(time_total)} ms'
 
     def enable_instrumentation(self):
         # operation_tracker.install_tracker()
@@ -49,6 +52,7 @@ class MongoPanel(Panel):
     def process_request(self, request):
         QueryTracker.reset()  # сбрасываем старые данные перед новым запросом
         result = super().process_request(request)
+        QueryTracker._save_last_refresh_query() # сохраняем последний запрос find
         return result
 
     def generate_stats(self, request, response):

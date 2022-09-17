@@ -12,7 +12,7 @@ class QueryTracker:
     queries = []
 
     _cur_refresh_query = None
-    _cur_refresh_cursor_id = None
+    _cur_refresh_cursor_hash = None
 
     @staticmethod
     def install():
@@ -23,7 +23,7 @@ class QueryTracker:
     def reset():
         QueryTracker.queries = []
         QueryTracker._cur_refresh_query = None
-        QueryTracker._cur_refresh_cursor_id = None
+        QueryTracker._cur_refresh_cursor_hash = None
 
     @staticmethod
     def count_documents(collection: pymongo.collection.Collection, filter, *args, **kwargs):
@@ -44,21 +44,37 @@ class QueryTracker:
         result = QueryTracker._original_methods['refresh'](cursor)
         total_time = (time.time() - start_time) * 1000
 
-        if cursor.cursor_id and QueryTracker._cur_refresh_cursor_id != cursor.cursor_id:
-            # на обработку пришел новый запрос
-            QueryTracker._new_refresh_query(cursor, total_time)
-        elif QueryTracker._cur_refresh_query:
-            # этот курсор - продолжение предыдущего запроса
+        cursor_hash = QueryTracker._cursor_to_hash(cursor)
+
+        if cursor_hash == QueryTracker._cur_refresh_cursor_hash:
+            # это продолжение запроса, увеличиваем таймер
             QueryTracker._cur_refresh_query['time'] += total_time
         else:
-            # это новый курсор, но без cursor_id, курсор выполнился за 1 запрос
+            # это новый запрос - создаем его
+            QueryTracker._save_last_refresh_query()  # сохранили старый, если есть
             QueryTracker._new_refresh_query(cursor, total_time)
 
+        # TODO тут по какому-то признаку надо попробовать понять,
+        #  что это последний кусок запроса и сразу сделать _save_last_refresh_query.
+        #  Иначе, последний find все равно попядет в массив, но порядок будет нарушен
         if not cursor.alive:
-            # курсор отработал - можно сохранять данные в массив
-            QueryTracker.queries.append(QueryTracker._cur_refresh_query)
-            QueryTracker._cur_refresh_query = None
-            QueryTracker._cur_refresh_cursor_id = None
+            QueryTracker._save_last_refresh_query()  # сохранили старый, если есть
+
+        # if cursor.cursor_id and QueryTracker._cur_refresh_cursor_id != cursor.cursor_id:
+        #     # на обработку пришел новый запрос
+        #     QueryTracker._new_refresh_query(cursor, total_time)
+        # elif QueryTracker._cur_refresh_query:
+        #     # этот курсор - продолжение предыдущего запроса
+        #     QueryTracker._cur_refresh_query['time'] += total_time
+        # else:
+        #     # это новый курсор, но без cursor_id, курсор выполнился за 1 запрос
+        #     QueryTracker._new_refresh_query(cursor, total_time)
+        #
+        # if not cursor.alive:
+        #     # курсор отработал - можно сохранять данные в массив
+        #     QueryTracker.queries.append(QueryTracker._cur_refresh_query)
+        #     QueryTracker._cur_refresh_query = None
+        #     QueryTracker._cur_refresh_cursor_id = None
 
         return result
 
@@ -80,9 +96,17 @@ class QueryTracker:
 
     @staticmethod
     def _new_refresh_query(cursor, total_time):
-        QueryTracker._cur_refresh_cursor_id = cursor.cursor_id
+        QueryTracker._cur_refresh_cursor_hash = QueryTracker._cursor_to_hash(cursor)
         QueryTracker._cur_refresh_query = {
             'type': 'find',
             'time': total_time
         }
         QueryTracker._cur_refresh_query.update(QueryTracker._cursor_to_dict(cursor))
+
+    @staticmethod
+    def _save_last_refresh_query():
+        if QueryTracker._cur_refresh_query:
+            # у нас осталась инфа про предыдущий запрос - надо его сохранить
+            QueryTracker.queries.append(QueryTracker._cur_refresh_query)
+            QueryTracker._cur_refresh_query = None
+            QueryTracker._cur_refresh_cursor_hash = None
