@@ -1,5 +1,7 @@
 import os
 
+SRC_DIR = os.path.dirname(__file__)
+
 DEBUG = True
 
 DATABASES = {
@@ -11,24 +13,46 @@ DATABASES = {
 
 SECRET_KEY = 'u=0tir)ob&3%uw3h4&&$%!!kffw$h*!_ia46f)qz%2rxnkhak&'
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-)
-
-TEMPLATE_DIRS = (
-    os.path.join(os.path.dirname(__file__), 'templates'),
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(SRC_DIR, 'templates')
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
+                # list if you haven't customized them:
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 INSTALLED_APPS = (
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+
     'debug_toolbar',
     'debug_toolbar_mongo',
 )
+
+STATIC_URL = "static/"
 
 DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.versions.VersionsPanel',
@@ -37,7 +61,7 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.headers.HeadersPanel',
     'debug_toolbar.panels.request.RequestPanel',
     'debug_toolbar.panels.templates.TemplatesPanel',
-    'debug_toolbar_mongo.panel.MongoDebugPanel',
+    'debug_toolbar_mongo.MongoPanel',
     'debug_toolbar.panels.sql.SQLPanel',
     'debug_toolbar.panels.signals.SignalsPanel',
     'debug_toolbar.panels.logging.LoggingPanel',

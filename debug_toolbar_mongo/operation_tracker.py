@@ -16,9 +16,9 @@ __all__ = ['queries', 'inserts', 'updates', 'removes', 'install_tracker',
 
 
 _original_methods = {
-    'insert': pymongo.collection.Collection.insert,
-    'update': pymongo.collection.Collection.update,
-    'remove': pymongo.collection.Collection.remove,
+    'insert': pymongo.collection.Collection.insert_one,
+    'update': pymongo.collection.Collection.update_one,
+    'remove': pymongo.collection.Collection.delete_one,
     'refresh': pymongo.cursor.Cursor._refresh,
 }
 
@@ -49,77 +49,77 @@ def _get_stacktrace():
 
 
 # Wrap Cursor._refresh for getting queries
-@functools.wraps(_original_methods['insert'])
-def _insert(collection_self, doc_or_docs, manipulate=True,
-           safe=False, check_keys=True, **kwargs):
-    start_time = time.time()
-    result = _original_methods['insert'](
-        collection_self,
-        doc_or_docs,
-        manipulate=manipulate,
-        safe=safe,
-        check_keys=check_keys,
-        **kwargs
-    )
-    total_time = (time.time() - start_time) * 1000
-
-    __traceback_hide__ = True
-    inserts.append({
-        'document': doc_or_docs,
-        'safe': safe,
-        'time': total_time,
-        'stack_trace': _get_stacktrace(),
-    })
-    return result
-
-# Wrap Cursor._refresh for getting queries
-@functools.wraps(_original_methods['update'])
-def _update(collection_self, spec, document, upsert=False,
-           maniuplate=False, safe=False, multi=False, **kwargs):
-    start_time = time.time()
-    result = _original_methods['update'](
-        collection_self,
-        spec,
-        document,
-        upsert=upsert,
-        safe=safe,
-        multi=multi,
-        **kwargs
-    )
-    total_time = (time.time() - start_time) * 1000
-
-    __traceback_hide__ = True
-    updates.append({
-        'document': document,
-        'upsert': upsert,
-        'multi': multi,
-        'spec': spec,
-        'safe': safe,
-        'time': total_time,
-        'stack_trace': _get_stacktrace(),
-    })
-    return result
+# @functools.wraps(_original_methods['insert'])
+# def _insert(collection_self, doc_or_docs, manipulate=True,
+#            safe=False, check_keys=True, **kwargs):
+#     start_time = time.time()
+#     result = _original_methods['insert'](
+#         collection_self,
+#         doc_or_docs,
+#         manipulate=manipulate,
+#         safe=safe,
+#         check_keys=check_keys,
+#         **kwargs
+#     )
+#     total_time = (time.time() - start_time) * 1000
+#
+#     __traceback_hide__ = True
+#     inserts.append({
+#         'document': doc_or_docs,
+#         'safe': safe,
+#         'time': total_time,
+#         'stack_trace': _get_stacktrace(),
+#     })
+#     return result
 
 # Wrap Cursor._refresh for getting queries
-@functools.wraps(_original_methods['remove'])
-def _remove(collection_self, spec_or_id, safe=False, **kwargs):
-    start_time = time.time()
-    result = _original_methods['remove'](
-        collection_self,
-        spec_or_id,
-        safe=safe,
-        **kwargs
-    )
-    total_time = (time.time() - start_time) * 1000
+# @functools.wraps(_original_methods['update'])
+# def _update(collection_self, spec, document, upsert=False,
+#            maniuplate=False, safe=False, multi=False, **kwargs):
+#     start_time = time.time()
+#     result = _original_methods['update'](
+#         collection_self,
+#         spec,
+#         document,
+#         upsert=upsert,
+#         safe=safe,
+#         multi=multi,
+#         **kwargs
+#     )
+#     total_time = (time.time() - start_time) * 1000
+#
+#     __traceback_hide__ = True
+#     updates.append({
+#         'document': document,
+#         'upsert': upsert,
+#         'multi': multi,
+#         'spec': spec,
+#         'safe': safe,
+#         'time': total_time,
+#         'stack_trace': _get_stacktrace(),
+#     })
+#     return result
 
-    __traceback_hide__ = True
-    removes.append({
-        'spec_or_id': spec_or_id,
-        'safe': safe,
-        'time': total_time,
-        'stack_trace': _get_stacktrace(),
-    })
-    return result
+# Wrap Cursor._refresh for getting queries
+# @functools.wraps(_original_methods['remove'])
+# def _remove(collection_self, spec_or_id, safe=False, **kwargs):
+#     start_time = time.time()
+#     result = _original_methods['remove'](
+#         collection_self,
+#         spec_or_id,
+#         safe=safe,
+#         **kwargs
+#     )
+#     total_time = (time.time() - start_time) * 1000
+#
+#     __traceback_hide__ = True
+#     removes.append({
+#         'spec_or_id': spec_or_id,
+#         'safe': safe,
+#         'time': total_time,
+#         'stack_trace': _get_stacktrace(),
+#     })
+#     return result
 
 # Wrap Cursor._refresh for getting queries
 @functools.wraps(_original_methods['refresh'])
@@ -188,25 +188,28 @@ def _cursor_refresh(cursor_self):
 
     return result
 
+
 def install_tracker():
-    if pymongo.collection.Collection.insert != _insert:
-        pymongo.collection.Collection.insert = _insert
-    if pymongo.collection.Collection.update != _update:
-        pymongo.collection.Collection.update = _update
-    if pymongo.collection.Collection.remove != _remove:
-        pymongo.collection.Collection.remove = _remove
+    # if pymongo.collection.Collection.insert != _insert:
+    #     pymongo.collection.Collection.insert = _insert
+    # if pymongo.collection.Collection.update != _update:
+    #     pymongo.collection.Collection.update = _update
+    # if pymongo.collection.Collection.remove != _remove:
+    #     pymongo.collection.Collection.remove = _remove
     if pymongo.cursor.Cursor._refresh != _cursor_refresh:
         pymongo.cursor.Cursor._refresh = _cursor_refresh
 
+
 def uninstall_tracker():
-    if pymongo.collection.Collection.insert == _insert:
-        pymongo.collection.Collection.insert = _original_methods['insert']
-    if pymongo.collection.Collection.update == _update:
-        pymongo.collection.Collection.update = _original_methods['update']
-    if pymongo.collection.Collection.remove == _remove:
-        pymongo.collection.Collection.remove = _original_methods['remove']
+    # if pymongo.collection.Collection.insert == _insert:
+    #     pymongo.collection.Collection.insert = _original_methods['insert']
+    # if pymongo.collection.Collection.update == _update:
+    #     pymongo.collection.Collection.update = _original_methods['update']
+    # if pymongo.collection.Collection.remove == _remove:
+    #     pymongo.collection.Collection.remove = _original_methods['remove']
     if pymongo.cursor.Cursor._refresh == _cursor_refresh:
         pymongo.cursor.Cursor._refresh = _original_methods['cursor_refresh']
+
 
 def reset():
     global queries, inserts, updates, removes
@@ -214,6 +217,7 @@ def reset():
     inserts = []
     updates = []
     removes = []
+
 
 def _get_ordering(son):
     """Helper function to extract formatted ordering from dict.
@@ -223,6 +227,7 @@ def _get_ordering(son):
 
     if '$orderby' in son:
         return ', '.join(fmt(f, d) for f, d in son['$orderby'].items())
+
 
 # Taken from Django Debug Toolbar 0.8.6
 def _tidy_stacktrace(stack):

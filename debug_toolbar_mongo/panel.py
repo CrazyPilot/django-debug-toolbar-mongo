@@ -1,10 +1,15 @@
 from django.template import Template, Context
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
-from debug_toolbar.panels import DebugPanel
+from debug_toolbar.panels import Panel
 
-import operation_tracker
+from django.views.debug import get_default_exception_reporter_filter
+get_safe_settings = get_default_exception_reporter_filter().get_safe_settings
+
+from debug_toolbar_mongo import operation_tracker
 
 _NAV_SUBTITLE_TPL = u'''
 {% for o, n, t in operations %}
@@ -16,24 +21,29 @@ _NAV_SUBTITLE_TPL = u'''
 {% endfor %}
 '''
 
-class MongoDebugPanel(DebugPanel):
+
+class MongoPanel(Panel):
     """Panel that shows information about MongoDB operations.
     """
     name = 'MongoDB'
     has_content = True
     template = 'mongo-panel.html'
 
-    def __init__(self, *args, **kwargs):
-        super(MongoDebugPanel, self).__init__(*args, **kwargs)
-        operation_tracker.install_tracker()
+    # def __init__(self, *args, **kwargs):
+    #     super(MongoPanel, self).__init__(*args, **kwargs)
+    #     operation_tracker.install_tracker()
 
-    def process_request(self, request):
-        operation_tracker.reset()
+    def title(self):
+        return 'MongoDB Operations'
 
     def nav_title(self):
         return 'MongoDB'
 
+    # def process_request(self, request):
+    #     operation_tracker.reset()
+
     def nav_subtitle(self):
+        return 'nav_subtitle here'
         fun = lambda x, y: (x, len(y), '%.2f' % sum(z['time'] for z in y))
         ctx = {'operations': [], 'count': 0, 'time': 0}
 
@@ -61,16 +71,13 @@ class MongoDebugPanel(DebugPanel):
 
         return mark_safe(Template(_NAV_SUBTITLE_TPL).render(Context(ctx)))
 
-    def title(self):
-        return 'MongoDB Operations'
-
-    def url(self):
-        return ''
-
-    def process_response(self, request, response):
-        self.record_stats({
-            'queries': operation_tracker.queries,
-            'inserts': operation_tracker.inserts,
-            'updates': operation_tracker.updates,
-            'removes': operation_tracker.removes
-        })
+    # def process_response(self, request, response):
+    #     self.record_stats({
+    #         'queries': operation_tracker.queries,
+    #         'inserts': operation_tracker.inserts,
+    #         'updates': operation_tracker.updates,
+    #         'removes': operation_tracker.removes
+    #     })
+    #
+    # def generate_stats(self, request, response):
+    #     self.record_stats({'a': 1})

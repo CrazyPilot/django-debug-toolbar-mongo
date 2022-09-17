@@ -1,19 +1,17 @@
-from django.http import HttpResponse
-from django.core.urlresolvers import reverse
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 
 import pymongo
+from pymongo import MongoClient
+client = MongoClient("mongodb://localhost:27017/?readPreference=primary&ssl=false")
+db = client.debug_test
 
-conn = pymongo.Connection()
-db = conn.debug_test
 
 def index(request):
     #list(db.test.find({'name': 'test'}))
-    db.test.find({'name': 'test'}).count()
-    db.test.find({'name': 'test'}).count()
+    db.test.count_documents({'name': 'test'})
+    db.test.count_documents({'name': 'test'})
     list(db.test.find({'name': 'test', 'age': {'$lt': 134234}}).skip(1))
-    db.test.find({'name': 'test'}).count()
-    db.test.find({'name': 'test'}).skip(1).count(with_limit_and_skip=True)
+    db.test.count_documents({'name': 'test'})
     list(db.test.find({'name': 'test'}).sort('name'))
     sort_fields = [('name', pymongo.DESCENDING), ('date', pymongo.ASCENDING)]
     list(db.test.find({'name': 'test'}).sort(sort_fields))
@@ -29,9 +27,9 @@ def index(request):
             }
         ]
     }))
-    db.test.insert({'name': 'test'})
-    db.test.insert({'name': 'test2'}, safe=True)
-    db.test.update({'name': 'test2'}, {'age': 1}, upsert=True)
-    db.test.remove({'name': 'test1'})
-    return render_to_response('index.html')
+    db.test.insert_one({'name': 'test'})
+    db.test.insert_one({'name': 'test2'})
+    db.test.update_one({'name': 'test2'}, {'$set': {'age': 1}}, upsert=True)
+    db.test.delete_one({'name': 'test1'})
+    return render(request, 'index.html')
 
