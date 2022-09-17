@@ -47,6 +47,15 @@ class MongoPanel(Panel):
         # operation_tracker.install_tracker()
         tracker.install()
 
+    def process_request(self, request):
+        tracker.reset()
+        return super().process_request(request)
+
+    def generate_stats(self, request, response):
+        self.record_stats({
+            'queries': tracker.queries
+        })
+
     # def process_request(self, request):
     #     operation_tracker.reset()
 

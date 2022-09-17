@@ -1,5 +1,6 @@
 {% load mongo_debug_tags %}
 
+{% comment %}
 <style type="text/css">
 #djDebug .panelContent tbody th {
     width: auto;
@@ -30,235 +31,34 @@ table.mongo-op-table tbody {
     width: 100% !important;
 }
 </style>
+{% endcomment %}
 
-<h4>Reads</h4>
 {% if queries %}
-<table class="mongo-op-table">
-    <thead>
-        <tr>
-            <th>Time (ms)</th>
-            <th>Operation</th>
-            <th>Cursor</th>
-            <th>Collection</th>
-            <th style="width: 100%">Query</th>
-            <th>Ordering</th>
-            <th>Skip</th>
-            <th>Limit</th>
-            <th>Stack Trace</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for query in queries %}
-            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
-                <td>{{ query.time|floatformat:"4" }}</td>
-                <td>{{ query.operation|title }}</td>
-                <td>{{ query.cursor }}</td>
-                <td>{{ query.collection }}</td>
-                <td>
-                    {% if query.query %}
-                        <pre class="mongo-highlight">{{ query.query|format_dict|highlight:"javascript"|safe }}</pre>
-                    {% endif %}
-                </td>
-                <td>{% if query.ordering %}<pre class="mongo-highlight">{{ query.ordering }}</pre>{% endif %}</td>
-                <td>{{ query.skip|default:"" }}</td>
-                <td>{{ query.limit|default:"" }}</td>
-                <td><a href="javascript:void(0);" class="mongo-toggle-trace" data-row="queries-{{ forloop.counter }}">Toggle</a></td>
-            </tr>
-            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
-                <td colspan="8">
-                    <table class="mongo-stack-trace "id="mongo-stack-trace-queries-{{ forloop.counter }}">
-                        <thead>
-                            <tr>
-                                <th>Line</th>
-                                <th>File</th>
-                                <th>Function</th>
-                                <th>Code</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for line in query.stack_trace %}
-                            <tr>
-                                <td class="lineno">{{ line.1 }}</td>
-                                <td class="file">{{ line.0|embolden_file }}</td>
-                                <td class="function">{{ line.2 }}</td>
-                                <td class="code">{{ line.3|highlight:"python"|safe }}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
+<table>
+  <thead>
+    <tr>
+      <th>Command</th>
+      <th>Collection</th>
+      <th>Query</th>
+      <th>Time, ms</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for query in queries %}
+    <tr>
+      <td>{{ query.type }}</td>
+      <td>{{ query.collection }}</td>
+      <td>{{ query.query }}</td>
+      <td>{{ query.time|floatformat }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
 </table>
 {% else %}
-<p>No queries recorded</p>
+  <p>No queries recorded</p>
 {% endif %}
 
-<h4>Inserts</h4>
-{% if inserts %}
-<table class="mongo-op-table">
-    <thead>
-        <tr>
-            <th>Time (ms)</th>
-            <th style="width: 100%">Document</th>
-            <th>Safe</th>
-            <th>Stack Trace</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for insert in inserts %}
-            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
-                <td>{{ insert.time|floatformat:"4" }}</td>
-                <td>
-                    <pre class="mongo-highlight">{{ insert.document|format_dict:120|highlight:"javascript"|safe }}</pre>
-                </td>
-                <td>{{ insert.safe }}</td>
-                <td><a href="javascript:void(0);" class="mongo-toggle-trace" data-row="inserts-{{ forloop.counter }}">Toggle</a></td>
-            </tr>
-            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
-                <td colspan="4">
-                    <table class="mongo-stack-trace "id="mongo-stack-trace-inserts-{{ forloop.counter }}">
-                        <thead>
-                            <tr>
-                                <th>Line</th>
-                                <th>File</th>
-                                <th>Function</th>
-                                <th>Code</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for line in insert.stack_trace %}
-                            <tr>
-                                <td class="lineno">{{ line.1 }}</td>
-                                <td class="file">{{ line.0|embolden_file }}</td>
-                                <td class="function">{{ line.2 }}</td>
-                                <td class="code">{{ line.3|highlight:"python"|safe }}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No inserts recorded</p>
-{% endif %}
-
-<h4>Updates</h4>
-{% if updates %}
-<table class="mongo-op-table">
-    <thead>
-        <tr>
-            <th>Time (ms)</th>
-            <th>Query</th>
-            <th style="width: 100%">Update</th>
-            <th>Safe</th>
-            <th>Multi</th>
-            <th>Upsert</th>
-            <th>Stack Trace</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for update in updates %}
-            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
-                <td>{{ update.time|floatformat:"4" }}</td>
-                <td>
-                    <pre class="mongo-highlight">{{ update.spec|format_dict:120|highlight:"javascript"|safe }}</pre>
-                </td>
-                <td>
-                    <pre class="mongo-highlight">{{ update.document|format_dict:120|highlight:"javascript"|safe }}</pre>
-                </td>
-                <td>{{ update.safe }}</td>
-                <td>{{ update.multi }}</td>
-                <td>{{ update.upsert }}</td>
-                <td><a href="javascript:void(0);" class="mongo-toggle-trace" data-row="updates-{{ forloop.counter }}">Toggle</a></td>
-            </tr>
-            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
-                <td colspan="7">
-                    <table class="mongo-stack-trace "id="mongo-stack-trace-updates-{{ forloop.counter }}">
-                        <thead>
-                            <tr>
-                                <th>Line</th>
-                                <th>File</th>
-                                <th>Function</th>
-                                <th>Code</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for line in update.stack_trace %}
-                            <tr>
-                                <td class="lineno">{{ line.1 }}</td>
-                                <td class="file">{{ line.0|embolden_file }}</td>
-                                <td class="function">{{ line.2 }}</td>
-                                <td class="code">{{ line.3|highlight:"python"|safe }}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No updates recorded</p>
-{% endif %}
-
-<h4>Removes</h4>
-{% if removes %}
-<table class="mongo-op-table">
-    <thead>
-        <tr>
-            <th>Time (ms)</th>
-            <th style="width: 100%">Query / Id</th>
-            <th>Safe</th>
-            <th>Stack Trace</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for remove in removes %}
-            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
-                <td>{{ remove.time|floatformat:"4" }}</td>
-                <td>
-                    <pre class="mongo-highlight">{{ remove.spec_or_id|format_dict:120|highlight:"javascript"|safe }}</pre>
-                </td>
-                <td>{{ remove.safe }}</td>
-                <td><a href="javascript:void(0);" class="mongo-toggle-trace" data-row="removes-{{ forloop.counter }}">Toggle</a></td>
-            </tr>
-            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
-                <td colspan="4">
-                    <table class="mongo-stack-trace "id="mongo-stack-trace-removes-{{ forloop.counter }}">
-                        <thead>
-                            <tr>
-                                <th>Line</th>
-                                <th>File</th>
-                                <th>Function</th>
-                                <th>Code</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for line in remove.stack_trace %}
-                            <tr>
-                                <td class="lineno">{{ line.1 }}</td>
-                                <td class="file">{{ line.0|embolden_file }}</td>
-                                <td class="function">{{ line.2 }}</td>
-                                <td class="code">{{ line.3|highlight:"python"|safe }}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No removes recorded</p>
-{% endif %}
-
+{% comment %}
 <script>
 (function() {
     var toggleButtons = document.querySelectorAll('a.mongo-toggle-trace');
@@ -280,3 +80,4 @@ table.mongo-op-table tbody {
     }
 })();
 </script>
+{% endcomment %}
