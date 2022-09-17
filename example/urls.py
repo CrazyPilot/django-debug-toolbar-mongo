@@ -1,8 +1,10 @@
 from django.urls import path, re_path, include
 import views
+import views_hidden
 
 urlpatterns = [
     path('', views.index),
+    path('hidden', views_hidden.index),
 ]
 
 

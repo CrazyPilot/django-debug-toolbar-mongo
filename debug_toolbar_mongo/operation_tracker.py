@@ -2,7 +2,6 @@ import functools
 import time
 import inspect
 import os
-import socketserver
 
 import django
 from django.conf import settings
@@ -26,26 +25,6 @@ queries = []
 inserts = []
 updates = []
 removes = []
-
-WANT_STACK_TRACE = getattr(settings, 'DEBUG_TOOLBAR_MONGO_STACKTRACES', True)
-def _get_stacktrace():
-    if WANT_STACK_TRACE:
-        try:
-            stack = inspect.stack()
-        except IndexError:
-            # this is a work around because python's inspect.stack() sometimes fail
-            # when jinja templates are on the stack
-            return [(
-                "",
-                0,
-                "Error retrieving stack",
-                "Could not retrieve stack. IndexError exception occured in inspect.stack(). "
-                "This error might occur when jinja2 templates is on the stack.",
-            )]
-
-        return _tidy_stacktrace(reversed(stack))
-    else:
-        return []
 
 
 # Wrap Cursor._refresh for getting queries
@@ -128,6 +107,8 @@ def _cursor_refresh(cursor_self):
     def privar(name):
         return getattr(cursor_self, '_Cursor__{0}'.format(name))
 
+    print(f"{cursor_self.collection.full_name} {cursor_self._Cursor__spec}")
+
     # NOTE: See pymongo/cursor.py+557 [_refresh()] and
     # pymongo/message.py for where information is stored
 
@@ -143,7 +124,7 @@ def _cursor_refresh(cursor_self):
     query_data = {
         'time': total_time,
         'operation': 'find',
-        'stack_trace': _get_stacktrace(),
+        'stack_trace': None  #_get_stacktrace(),
     }
 
     if is_getmore:
@@ -227,41 +208,3 @@ def _get_ordering(son):
 
     if '$orderby' in son:
         return ', '.join(fmt(f, d) for f, d in son['$orderby'].items())
-
-
-# Taken from Django Debug Toolbar 0.8.6
-def _tidy_stacktrace(stack):
-    """
-    Clean up stacktrace and remove all entries that:
-    1. Are part of Django (except contrib apps)
-    2. Are part of SocketServer (used by Django's dev server)
-    3. Are the last entry (which is part of our stacktracing code)
-
-    ``stack`` should be a list of frame tuples from ``inspect.stack()``
-    """
-    django_path = os.path.realpath(os.path.dirname(django.__file__))
-    django_path = os.path.normpath(os.path.join(django_path, '..'))
-    socketserver_path = os.path.realpath(os.path.dirname(SocketServer.__file__))
-    pymongo_path = os.path.realpath(os.path.dirname(pymongo.__file__))
-
-    trace = []
-    for frame, path, line_no, func_name, text in (f[:5] for f in stack):
-        s_path = os.path.realpath(path)
-        # Support hiding of frames -- used in various utilities that provide
-        # inspection.
-        if '__traceback_hide__' in frame.f_locals:
-            continue
-        if getattr(settings, 'DEBUG_TOOLBAR_CONFIG', {}).get('HIDE_DJANGO_SQL', True) \
-            and django_path in s_path and not 'django/contrib' in s_path:
-            continue
-        if socketserver_path in s_path:
-            continue
-        if pymongo_path in s_path:
-            continue
-        if not text:
-            text = ''
-        else:
-            text = (''.join(text)).strip()
-        trace.append((path, line_no, func_name, text))
-    return trace
-

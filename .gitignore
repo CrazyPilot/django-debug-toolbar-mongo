@@ -4,3 +4,5 @@
 .eggs
 .idea
 .venv
+
+example/views_hidden.py
