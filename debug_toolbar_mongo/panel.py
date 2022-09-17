@@ -10,7 +10,7 @@ from django.views.debug import get_default_exception_reporter_filter
 get_safe_settings = get_default_exception_reporter_filter().get_safe_settings
 
 from debug_toolbar_mongo import operation_tracker
-from . import tracker
+from .tracker import QueryTracker
 
 _NAV_SUBTITLE_TPL = u'''
 {% for o, n, t in operations %}
@@ -45,15 +45,15 @@ class MongoPanel(Panel):
 
     def enable_instrumentation(self):
         # operation_tracker.install_tracker()
-        tracker.install()
+        QueryTracker.install()
 
     def process_request(self, request):
-        tracker.reset()
+        QueryTracker.reset()
         return super().process_request(request)
 
     def generate_stats(self, request, response):
         self.record_stats({
-            'queries': tracker.queries
+            'queries': QueryTracker.queries
         })
 
     # def process_request(self, request):
