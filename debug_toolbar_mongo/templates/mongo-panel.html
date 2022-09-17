@@ -40,6 +40,7 @@ table.mongo-op-table tbody {
       <th>Command</th>
       <th>Collection</th>
       <th>Query</th>
+      <th>Other</th>
       <th>Time, ms</th>
     </tr>
   </thead>
@@ -49,6 +50,20 @@ table.mongo-op-table tbody {
       <td>{{ query.type }}</td>
       <td>{{ query.collection }}</td>
       <td>{{ query.query }}</td>
+      <td>
+        {% if query.projection %}
+          Projection: {{ query.projection }}<br>
+        {% endif %}
+        {% if query.ordering %}
+          Ordering: {{ query.ordering }}<br>
+        {% endif %}
+        {% if query.skip %}
+          Skip: {{ query.skip }}<br>
+        {% endif %}
+        {% if query.limit %}
+          Limit: {{ query.limit }}<br>
+        {% endif %}
+      </td>
       <td>{{ query.time|floatformat }}</td>
     </tr>
   {% endfor %}

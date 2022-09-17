@@ -48,10 +48,14 @@ class MongoPanel(Panel):
         QueryTracker.install()
 
     def process_request(self, request):
-        QueryTracker.reset()
-        return super().process_request(request)
+        QueryTracker.reset()  # сбрасываем старые данные перед новым запросом
+        result = super().process_request(request)
+        # print('!! QueryTracker.save_last_refresh_query()')
+        QueryTracker.save_last_refresh_query()  # сохраняем данные последнего find
+        return result
 
     def generate_stats(self, request, response):
+        # print('!! generate_stats')
         self.record_stats({
             'queries': QueryTracker.queries
         })
