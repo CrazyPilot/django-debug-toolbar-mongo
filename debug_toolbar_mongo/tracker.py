@@ -16,15 +16,15 @@ class QueryTracker:
 
     @staticmethod
     def enable():
-        print("ENABLE")
         pymongo.collection.Collection.count_documents = QueryTracker.count_documents
         pymongo.cursor.Cursor._refresh = QueryTracker.refresh
 
     @staticmethod
     def disable():
-        print("DISABLE")
-        pymongo.collection.Collection.count_documents = QueryTracker.count_documents
-        pymongo.cursor.Cursor._refresh = QueryTracker.refresh
+        if pymongo.collection.Collection.count_documents == QueryTracker.count_documents:
+            pymongo.collection.Collection.count_documents = QueryTracker._original_methods['count_documents']
+        if pymongo.cursor.Cursor._refresh == QueryTracker.refresh:
+            pymongo.cursor.Cursor._refresh = QueryTracker._original_methods['refresh']
 
     @staticmethod
     def reset():
