@@ -52,32 +52,32 @@ removes = []
 #     return result
 
 # Wrap Cursor._refresh for getting queries
-# @functools.wraps(_original_methods['update'])
-# def _update(collection_self, spec, document, upsert=False,
-#            maniuplate=False, safe=False, multi=False, **kwargs):
-#     start_time = time.time()
-#     result = _original_methods['update'](
-#         collection_self,
-#         spec,
-#         document,
-#         upsert=upsert,
-#         safe=safe,
-#         multi=multi,
-#         **kwargs
-#     )
-#     total_time = (time.time() - start_time) * 1000
-#
-#     __traceback_hide__ = True
-#     updates.append({
-#         'document': document,
-#         'upsert': upsert,
-#         'multi': multi,
-#         'spec': spec,
-#         'safe': safe,
-#         'time': total_time,
-#         'stack_trace': _get_stacktrace(),
-#     })
-#     return result
+@functools.wraps(_original_methods['update'])
+def _update(collection_self, spec, document, upsert=False,
+           maniuplate=False, safe=False, multi=False, **kwargs):
+    start_time = time.time()
+    result = _original_methods['update'](
+        collection_self,
+        spec,
+        document,
+        upsert=upsert,
+        safe=safe,
+        multi=multi,
+        **kwargs
+    )
+    total_time = (time.time() - start_time) * 1000
+
+    __traceback_hide__ = True
+    updates.append({
+        'document': document,
+        'upsert': upsert,
+        'multi': multi,
+        'spec': spec,
+        'safe': safe,
+        'time': total_time,
+        'stack_trace': _get_stacktrace(),
+    })
+    return result
 
 # Wrap Cursor._refresh for getting queries
 # @functools.wraps(_original_methods['remove'])
