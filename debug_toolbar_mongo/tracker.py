@@ -15,6 +15,7 @@ class QueryTracker:
         'replace_one': pymongo.collection.Collection.replace_one,
         'delete_one': pymongo.collection.Collection.delete_one,
         'delete_many': pymongo.collection.Collection.delete_many,
+        'aggregate': pymongo.collection.Collection.aggregate,
     }
 
     queries = []
@@ -33,6 +34,7 @@ class QueryTracker:
         pymongo.collection.Collection.replace_one = QueryTracker._replace_one
         pymongo.collection.Collection.delete_one = QueryTracker._delete_one
         pymongo.collection.Collection.delete_many = QueryTracker._delete_many
+        pymongo.collection.Collection.aggregate = QueryTracker._aggregate
 
     @staticmethod
     def disable():
@@ -43,6 +45,9 @@ class QueryTracker:
         pymongo.collection.Collection.update_one = QueryTracker._original_methods['update_one']
         pymongo.collection.Collection.update_many = QueryTracker._original_methods['update_many']
         pymongo.collection.Collection.replace_one = QueryTracker._original_methods['replace_one']
+        pymongo.collection.Collection.delete_one = QueryTracker._original_methods['delete_one']
+        pymongo.collection.Collection.delete_many = QueryTracker._original_methods['delete_many']
+        pymongo.collection.Collection.aggregate = QueryTracker._original_methods['aggregate']
 
     @staticmethod
     def reset():
@@ -95,6 +100,10 @@ class QueryTracker:
     @staticmethod
     def _delete_many(collection: pymongo.collection.Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('delete_many', collection, filter, *args, **kwargs)
+
+    @staticmethod
+    def _aggregate(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+        return QueryTracker._profile_simple_op('aggregate', collection, filter, *args, **kwargs)
 
     @staticmethod
     def _refresh(cursor: pymongo.cursor.Cursor):

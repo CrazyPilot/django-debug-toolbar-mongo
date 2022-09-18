@@ -62,5 +62,18 @@ def index(request):
         with timer():
             collection.update_many({'name': "Alice"}, {'$set': {'job.salary': 3500}}, comment='update_many')
 
+    with section('aggregate'):
+        get_list(collection.aggregate([
+             {
+                '$project': {
+                    'food': 0
+                }
+            }, {
+                '$set': {
+                    'money': '$job.salary'
+                }
+            }
+        ], comment='aggregate'))
+
     return render(request, 'index.html')
 
