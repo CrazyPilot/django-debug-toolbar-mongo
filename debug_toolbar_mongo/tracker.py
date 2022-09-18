@@ -15,7 +15,14 @@ class QueryTracker:
     _cur_refresh_cursor_hash = None
 
     @staticmethod
-    def install():
+    def enable():
+        print("ENABLE")
+        pymongo.collection.Collection.count_documents = QueryTracker.count_documents
+        pymongo.cursor.Cursor._refresh = QueryTracker.refresh
+
+    @staticmethod
+    def disable():
+        print("DISABLE")
         pymongo.collection.Collection.count_documents = QueryTracker.count_documents
         pymongo.cursor.Cursor._refresh = QueryTracker.refresh
 
@@ -45,6 +52,7 @@ class QueryTracker:
         total_time = (time.time() - start_time) * 1000
 
         cursor_hash = QueryTracker._cursor_to_hash(cursor)
+        print('...')
 
         if cursor_hash == QueryTracker._cur_refresh_cursor_hash:
             # это продолжение запроса, увеличиваем таймер

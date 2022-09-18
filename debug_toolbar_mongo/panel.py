@@ -46,8 +46,10 @@ class MongoPanel(Panel):
         return f'{count} queries in {round(time_total)} ms'
 
     def enable_instrumentation(self):
-        # operation_tracker.install_tracker()
-        QueryTracker.install()
+        QueryTracker.enable()
+
+    def disable_instrumentation(self):
+        QueryTracker.disable()
 
     def process_request(self, request):
         QueryTracker.reset()  # сбрасываем старые данные перед новым запросом
