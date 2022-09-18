@@ -52,7 +52,6 @@ class QueryTracker:
         total_time = (time.time() - start_time) * 1000
 
         cursor_hash = QueryTracker._cursor_to_hash(cursor)
-        print('...')
 
         if cursor_hash == QueryTracker._cur_refresh_cursor_hash:
             # это продолжение запроса, увеличиваем таймер
