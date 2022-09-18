@@ -31,7 +31,7 @@ def get_list(iterable):
 def index(request):
     with section('count_documents'):
         with timer():
-            collection.count_documents({'name': 'Alice'})
+            collection.count_documents({'name': 'Alice'}, comment='count_documents')
 
     with section('find 1'):
         get_list(collection.find({'name': 'Alice'}, comment='find 1'))
@@ -58,9 +58,9 @@ def index(request):
     with section('find complicated query'):
         get_list(collection.find({'job.title': 'Developer', 'age': {'$gte': 30, '$lte': 40}}, comment='find complicated query'))
 
-    with section('update'):
+    with section('update_many'):
         with timer():
-            collection.update_many({'name': "Alice"}, {'$set': {'job.salary': 3500}})
+            collection.update_many({'name': "Alice"}, {'$set': {'job.salary': 3500}}, comment='update_many')
 
     return render(request, 'index.html')
 
