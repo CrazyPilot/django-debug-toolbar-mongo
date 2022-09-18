@@ -1,10 +1,12 @@
+from django.conf import settings
 from django.shortcuts import render
 from contextlib import contextmanager
 import time
 import pymongo
 from pymongo import MongoClient
-client = MongoClient("mongodb://localhost:27017/?readPreference=primary&ssl=false")
-db = client.debug_test
+
+
+collection = MongoClient(settings.MONGO_CONN)[settings.MONGO_DB][settings.MONGO_COLLECTION]
 
 
 @contextmanager
@@ -14,56 +16,51 @@ def section(name):
     print('└' + '─'*80)
 
 
-def get_list(iterable):
+@contextmanager
+def timer():
     t = time.time()
-    print(f"items count: {len(list(iterable))}")
-    print(f"for loop time: {(time.time() - t) * 1000} ms")
+    yield
+    print(f" time: {(time.time() - t) * 1000} ms")
+
+
+def get_list(iterable):
+    with timer():
+        print(f"items count: {len(list(iterable))}")
 
 
 def index(request):
-    with section('test'):
-        db.test.count_documents({'name': 'test'})
+    with section('count_documents'):
+        with timer():
+            collection.count_documents({'name': 'Alice'})
 
-    print('2')
-    db.test.count_documents({'name': 'test'})
+    with section('find 1'):
+        get_list(collection.find({'name': 'Alice'}, comment='find 1'))
 
-    print('3')
-    list(db.test.find({'name': 'test', 'age': {'$lt': 134234}}).skip(1))
+    with section('find 2'):
+        get_list(collection.find({'name': 'Alice'}, comment='find 2'))
 
-    print('4')
-    db.test.count_documents({'name': 'test'})
+    with section('find one'):
+        with timer():
+            collection.find_one({'idx': 25}, comment='find one')
 
-    print('5')
-    list(db.test.find({'name': 'test'}).sort('name'))
+    with section('find projection'):
+        get_list(collection.find({'job.title': 'Developer'}, {'job': 1}, comment='find projection'))
 
-    print('6')
-    sort_fields = [('name', pymongo.DESCENDING), ('date', pymongo.ASCENDING)]
-    list(db.test.find({'name': 'test'}).sort(sort_fields))
+    with section('find all'):
+        get_list(collection.find(comment='find all'))
 
-    print('7')
-    list(db.test.find({
-        '$or': [
-            {
-                'age': {'$lt': 50, '$gt': 18},
-                'paying': True,
-            },
-            {
-                'name': 'King of the world',
-                'paying': False,
-            }
-        ]
-    }))
+    with section('find ordered'):
+        get_list(collection.find({'job.title': 'Developer'}, comment='find ordered').sort('age', -1))
 
-    print('8')
-    db.test.insert_one({'name': 'test'})
+    with section('find skip limit'):
+        get_list(collection.find({'job.title': 'Developer'}, comment='find skip limit').skip(20).limit(50))
 
-    print('9')
-    db.test.insert_one({'name': 'test2'})
+    with section('find complicated query'):
+        get_list(collection.find({'job.title': 'Developer', 'age': {'$gte': 30, '$lte': 40}}, comment='find complicated query'))
 
-    print('10')
-    db.test.update_one({'name': 'test2'}, {'$set': {'age': 1}}, upsert=True)
+    with section('update'):
+        with timer():
+            collection.update_many({'name': "Alice"}, {'$set': {'job.salary': 3500}})
 
-    print('11')
-    db.test.delete_one({'name': 'test1'})
     return render(request, 'index.html')
 

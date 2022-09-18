@@ -87,6 +87,7 @@ class QueryTracker:
             'ordering': cursor._Cursor__ordering.to_dict() if cursor._Cursor__ordering else cursor._Cursor__ordering,
             'skip': cursor._Cursor__skip,
             'limit': cursor._Cursor__limit,
+            'comment': cursor._Cursor__comment,
         }
 
     @staticmethod

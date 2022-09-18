@@ -11,6 +11,10 @@ DATABASES = {
     }
 }
 
+MONGO_CONN = "mongodb://localhost:27017/?readPreference=primary&ssl=false"
+MONGO_DB = "test_django-debug-toolbar-mongo"
+MONGO_COLLECTION = 'test'
+
 SECRET_KEY = 'u=0tir)ob&3%uw3h4&&$%!!kffw$h*!_ia46f)qz%2rxnkhak&'
 
 MIDDLEWARE = (
@@ -50,6 +54,8 @@ INSTALLED_APPS = (
 
     'debug_toolbar',
     'debug_toolbar_mongo',
+
+    'example'
 )
 
 STATIC_URL = "static/"

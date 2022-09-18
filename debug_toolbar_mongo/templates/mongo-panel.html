@@ -41,6 +41,7 @@ table.mongo-op-table tbody {
       <th>Collection</th>
       <th>Query</th>
       <th>Other</th>
+      <th>Comment</th>
       <th>Time, ms</th>
     </tr>
   </thead>
@@ -64,6 +65,7 @@ table.mongo-op-table tbody {
           Limit: {{ query.limit }}<br>
         {% endif %}
       </td>
+      <td>{% if query.comment %}{{ query.comment }}{% endif %}</td>
       <td>{{ query.time|floatformat }}</td>
     </tr>
   {% endfor %}
