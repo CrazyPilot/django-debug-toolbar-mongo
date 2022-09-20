@@ -1,6 +1,7 @@
 import pymongo
 import time
-import json
+import bson.json_util
+
 
 
 class QueryTracker:
@@ -63,7 +64,7 @@ class QueryTracker:
         QueryTracker.queries.append({
             'type': name,
             'collection': collection.full_name,
-            'query': json.dumps(filter),
+            'query': bson.json_util.dumps(filter),
             'comment': kwargs.get('comment'),
             'time': total_time
         })
@@ -131,7 +132,7 @@ class QueryTracker:
     def _cursor_to_dict(cursor):
         return {
             'collection': cursor.collection.full_name,
-            'query': json.dumps(cursor._Cursor__spec),
+            'query': bson.json_util.dumps(cursor._Cursor__spec),
             'projection': cursor._Cursor__projection,
             'ordering': cursor._Cursor__ordering.to_dict() if cursor._Cursor__ordering else cursor._Cursor__ordering,
             'skip': cursor._Cursor__skip,
@@ -142,7 +143,7 @@ class QueryTracker:
     @staticmethod
     def _cursor_to_hash(cursor):
         d = QueryTracker._cursor_to_dict(cursor)
-        return json.dumps(d)
+        return bson.json_util.dumps(d)
 
     @staticmethod
     def _new_refresh_query(cursor, total_time):
