@@ -1,38 +1,5 @@
 {% load mongo_debug_tags %}
 
-{% comment %}
-<style type="text/css">
-#djDebug .panelContent tbody th {
-    width: auto;
-}
-#djDebug .panelContent table {
-    display: table;
-}
-#djDebug tr.row1 {
-    background-color: #F5F5F5;
-}
-#djDebug #djDebugRequestVarsPanel table:first-of-type tbody tr:nth-child(odd) {
-    background-color: #F5F5F5;
-}
-pre.mongo-highlight, pre.mongo-highlight span {
-    font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', 'Monaco', 'Courier New', monospace !important;
-    font-size: 1.05em !important;
-}
-pre.mongo-stack-trace {
-    line-height: 2.3em !important;
-}
-table.mongo-stack-trace th {
-    text-align: left !important;
-}
-table.mongo-stack-trace td.code, table.mongo-stack-trace td.code span, table.mongo-stack-trace td.function {
-    font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', 'Monaco', 'Courier New', monospace !important;
-}
-table.mongo-op-table tbody {
-    width: 100% !important;
-}
-</style>
-{% endcomment %}
-
 {% if queries %}
 <table>
   <thead>
@@ -40,7 +7,6 @@ table.mongo-op-table tbody {
       <th>Command</th>
       <th>Collection</th>
       <th>Query</th>
-      <th>Other</th>
       <th>Comment</th>
       <th>Time (ms)</th>
       <th>Actions</th>
@@ -51,24 +17,28 @@ table.mongo-op-table tbody {
     <tr>
       <td>{{ query.type }}</td>
       <td>{{ query.collection }}</td>
-      <td>{{ query.query }}</td>
       <td>
-        {% if query.projection %}
-          Projection: {{ query.projection }}<br>
-        {% endif %}
-        {% if query.ordering %}
-          Ordering: {{ query.ordering }}<br>
-        {% endif %}
-        {% if query.skip %}
-          Skip: {{ query.skip }}<br>
-        {% endif %}
-        {% if query.limit %}
-          Limit: {{ query.limit }}<br>
-        {% endif %}
+        <table class="inner">
+          <tr><td colspan="2">{{ query.query }}</td></tr>
+          {% if query.projection %}
+            <tr><td class="muted">Project</td><td>{{ query.projection }}</td></tr>
+          {% endif %}
+          {% if query.ordering %}
+            <tr><td class="muted">Sort</td><td>{{ query.ordering }}</td></tr>
+          {% endif %}
+          {% if query.skip %}
+            <tr><td class="muted">Skip</td><td>{{ query.skip }}</td></tr>
+          {% endif %}
+          {% if query.limit %}
+            <tr><td class="muted">Limit</td><td>{{ query.limit }}</td></tr>
+          {% endif %}
+        </table>
       </td>
       <td>{% if query.comment %}{{ query.comment }}{% endif %}</td>
       <td>{{ query.time|floatformat }}</td>
-      <td><button>Expl</button></td>
+      <td>
+        <button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Expl</button>
+      </td>
     </tr>
   {% endfor %}
   </tbody>
@@ -77,26 +47,20 @@ table.mongo-op-table tbody {
   <p>No queries recorded</p>
 {% endif %}
 
-{% comment %}
-<script>
-(function() {
-    var toggleButtons = document.querySelectorAll('a.mongo-toggle-trace');
-    for (var i = 0; i < toggleButtons.length; i++) {
-        (function() {
-            var button = toggleButtons[i];
-            var index = button.dataset.row;
-            var trace = document.getElementById('mongo-stack-trace-' + index);
-            trace.style.display = "none";
+{{ queries|json_script:'djdt-mongo-json-queries' }}
 
-            button.addEventListener("click", function() {
-                if (trace.style.display == "none") {
-                    trace.style.display = "";
-                } else {
-                    trace.style.display = "none";
-                }
-            }, true);
-        })();
-    }
-})();
-</script>
-{% endcomment %}
+<style>
+  #djDebug table.inner td.muted {
+      color: #aaa;
+      width: 40px;
+      {#white-space: nowrap;#}
+  }
+  #djDebug table.inner{
+      margin: 0;
+      border: none;
+      background-color: transparent;
+  }
+  #djDebug table.inner tr{
+      background-color: transparent !important;
+  }
+</style>

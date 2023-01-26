@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.urls import path
+from django.templatetags.static import static
 
 from debug_toolbar.panels import Panel
 
@@ -46,6 +47,12 @@ class MongoPanel(Panel):
         return [
             path("mongo_explain/", mongo_explain, name="mongo_explain"),
         ]
+
+    @property
+    def scripts(self):
+        scripts = super().scripts
+        scripts.append(static("debug_toolbar_mongo/debug_toolbar_mongo.js"))
+        return scripts
 
     def nav_subtitle(self):
         stats = self.get_stats()
