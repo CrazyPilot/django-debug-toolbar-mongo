@@ -43,6 +43,7 @@ table.mongo-op-table tbody {
       <th>Other</th>
       <th>Comment</th>
       <th>Time (ms)</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -67,6 +68,7 @@ table.mongo-op-table tbody {
       </td>
       <td>{% if query.comment %}{{ query.comment }}{% endif %}</td>
       <td>{{ query.time|floatformat }}</td>
+      <td><button>Expl</button></td>
     </tr>
   {% endfor %}
   </tbody>

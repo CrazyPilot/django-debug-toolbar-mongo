@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.urls import path
 
 from debug_toolbar.panels import Panel
 
@@ -10,6 +11,7 @@ from django.views.debug import get_default_exception_reporter_filter
 get_safe_settings = get_default_exception_reporter_filter().get_safe_settings
 
 from .tracker import QueryTracker
+from .views import mongo_explain
 
 _NAV_SUBTITLE_TPL = u'''
 {% for o, n, t in operations %}
@@ -38,6 +40,12 @@ class MongoPanel(Panel):
 
     def nav_title(self):
         return 'MongoDB'
+
+    @classmethod
+    def get_urls(cls):
+        return [
+            path("mongo_explain/", mongo_explain, name="mongo_explain"),
+        ]
 
     def nav_subtitle(self):
         stats = self.get_stats()
