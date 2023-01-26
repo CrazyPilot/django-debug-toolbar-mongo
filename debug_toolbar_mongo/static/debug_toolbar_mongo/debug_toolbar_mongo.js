@@ -7,23 +7,15 @@ let mongoExplain = (e) => {
 }
 
 function onRender() {
-    console.log("MongoPanel scripts")
-
+    // Be sure to cover the case of this function being called twice
+    // due to file being loaded asynchronously.
     if(window.djdtMongoQueries === undefined){
         // Эта штука выполнится один раз
-        console.log("MongoPanel scripts init")
-
         for( let i of document.querySelectorAll('.djdt-mongo-btn-explain')){
             i.addEventListener('click', mongoExplain)
         }
-
         window.djdtMongoQueries = JSON.parse(document.getElementById('djdt-mongo-json-queries').textContent)
     }
-
-
-
-    // Be sure to cover the case of this function being called twice
-    // due to file being loaded asynchronously.
 }
 const djDebug = document.getElementById("djDebug");
 $$.onPanelRender(djDebug, "MongoPanel", onRender);
