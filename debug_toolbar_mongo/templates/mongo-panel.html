@@ -34,11 +34,20 @@
           {% endif %}
         </table>
       </td>
-      <td>{% if query.comment %}{{ query.comment }}{% endif %}</td>
-      <td>{{ query.time|floatformat }}</td>
+      <td>
+        {% if query.comment %}{{ query.comment }}{% endif %}
+        {% if explain_enabled %}
+          {% if query.explain.covered_by_index %}<div class="badge green" style="text-align: center">Covered by index</div>{% endif %}
+          {% if query.explain.sorted_in_memory %}<div class="badge red" style="text-align: center">Sorted in memory</div>{% endif %}
+        {% endif %}
+      </td>
+      <td>
+        {{ query.time|floatformat }}
+      </td>
       {% if explain_enabled %}
         <td>
-          <button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Expl</button>
+          {{ query.explain.html|safe }}
+{#          <div><button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Expl</button></div>#}
         </td>
       {% endif %}
     </tr>
@@ -64,5 +73,46 @@
   }
   #djDebug table.inner tr{
       background-color: transparent !important;
+  }
+
+  #djDebug .badge {
+      padding: 1px 3px;
+      border-style: solid;
+      border-width: 0px;
+      border-radius: 4px;
+  }
+  #djDebug .badge.green{
+      color: RGBA(25,135,84,1);
+      border-color: RGBA(25,135,84,0.7);
+      background-color: RGBA(25,135,84,0.1)
+  }
+  #djDebug .badge.red{
+      color: RGBA(220,53,69,1);
+      border-color: RGBA(220,53,69,0.7);
+      background-color: RGBA(220,53,69,0.1)
+  }
+  #djDebug .badge.yellow{
+      color: RGBA(255,193,7,1);
+      border-color: RGBA(255,193,7,0.7);
+      background-color: RGBA(255,193,7,0.1)
+  }
+  #djDebug .badge.grey{
+      color: RGBA(108,117,125,1);
+      border-color: RGBA(108,117,125,0.7);
+      background-color: RGBA(108,117,125,0.1)
+  }
+
+  #djDebug .header{
+      font-size: 15px;
+      font-weight: bold;
+  }
+  #djDebug .header.green{
+      color: RGBA(25,135,84,1);
+  }
+  #djDebug .header.red{
+      color: RGBA(220,53,69,1);
+  }
+  #djDebug .header.yellow{
+      color: RGBA(255,193,7,1);
   }
 </style>

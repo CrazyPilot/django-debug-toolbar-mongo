@@ -4,6 +4,8 @@ import bson.json_util
 from bson import SON
 
 from django.conf import settings
+from django.template.loader import get_template
+from django.template import Context
 
 
 EXPLAIN_ENABLED = getattr(settings, 'DEBUG_TOOLBAR_MONGO_EXPLAIN', False)
@@ -241,6 +243,7 @@ class QueryTracker:
         index_intel = {}
         if len(indexes) == 1:
             index_intel['state'] = 'OK'
+            index_intel['name'] = indexes[0]
 
             # инфа о полях, кторые используются в индексе
             index_info = MongoIndexInfo.index_info(collection, indexes[0])
@@ -285,14 +288,18 @@ class QueryTracker:
         elif len(indexes) == 0:
             index_intel['state'] = 'NOT_USED'
         else:
-            index_intel['state'] = 'WEIRD'  # использовалось несколько индексов -- разибарайся с ними сам
+            index_intel['state'] = 'COMPLICATED'  # использовалось несколько индексов -- разибарайся с ними сам
 
         result = {
-            'covered_by_index': 'FETCH' not in stage_types,  # покрыто индексом
+            'covered_by_index': len(indexes) == 1 and 'FETCH' not in stage_types,  # покрыто индексом
             'sorted_in_memory': 'SORT' in stage_types,
             'index_intel': index_intel,
             'raw': raw_explain,
             'stages': stage_types,
             'indexes': indexes,
         }
+
+        tpl = get_template('mongo-explain.html')
+        result['html'] = tpl.render(result)
+
         return result

@@ -55,6 +55,13 @@ def index(request):
     with section('find ordered partly index'):
         get_list(collection.find({'job.title': 'Developer', 'name': 'Bob'}, comment='find ordered partly index').sort('age', -1))
 
+    with section('find ordered in memory'):
+        get_list(collection.find({'job.title': 'Developer'}, comment='find ordered in memory').sort('job.salary', -1))
+
+    with section('find covered by index'):
+        get_list(collection.find({'job.title': 'Developer'}, {'_id': 0, 'job.title': 1, 'age': 1}, comment='find covered by index').sort('age', -1))
+
+
     with section('find skip limit'):
         get_list(collection.find({'job.title': 'Developer'}, comment='find skip limit').skip(20).limit(50))
 
