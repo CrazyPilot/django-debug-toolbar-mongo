@@ -18,6 +18,16 @@ def son_to_pymongo(son: SON):
     return result
 
 
+class MongoIndexInfo:
+    collections = {}
+
+    @classmethod
+    def index_info(cls, collection: pymongo.collection.Collection, index_name):
+        if collection.name not in cls.collections:
+            cls.collections[collection.name] = collection.index_information()
+        return cls.collections[collection.name][index_name]['key']
+
+
 class QueryTracker:
 
     _original_methods = {
@@ -81,7 +91,7 @@ class QueryTracker:
             if name not in ['aggregate', 'insert_one', 'insert_many']:
                 QueryTracker.disable()
                 raw_explain = collection.find(filter).explain()
-                explain = QueryTracker._analyze_raw_explain(raw_explain)
+                explain = QueryTracker._analyze_raw_explain(raw_explain, collection, filter)
                 QueryTracker.enable()
 
         QueryTracker.queries.append({
@@ -197,7 +207,7 @@ class QueryTracker:
                     _request = _request.sort(list(_sort))
                 raw_explain = _request.skip(_skip).limit(_limit).explain()
                 print(f" 🔍 Explain {cursor._Cursor__comment} {cursor._Cursor__spec}")
-                explain = QueryTracker._analyze_raw_explain(raw_explain)
+                explain = QueryTracker._analyze_raw_explain(raw_explain, cursor.collection, _query, _sort)
                 QueryTracker.enable()
             QueryTracker._cur_refresh_query['explain'] = explain
 
@@ -207,7 +217,7 @@ class QueryTracker:
             QueryTracker._cur_refresh_cursor_hash = None
 
     @staticmethod
-    def _analyze_raw_explain(raw_explain):
+    def _analyze_raw_explain(raw_explain, collection: pymongo.collection.Collection, query_filter=None, query_sort=None):
         """
         COLLSCAN -- не нашли никакого индекса (плохо)
         IXSCAN -- нашли индекс (надо проверить покрытие)
@@ -225,15 +235,64 @@ class QueryTracker:
             if stage['stage'] == 'IXSCAN':
                 indexes.add(stage['indexName'])
             stage = stage['inputStage'] if 'inputStage' in stage else None
+        stage_types = list(stage_types)
+        indexes = list(indexes)
 
+        index_intel = {}
         if len(indexes) == 1:
-            # TODO првоерить совпадение полей индекса и запроса
-            pass
+            index_intel['state'] = 'OK'
+
+            # инфа о полях, кторые используются в индексе
+            index_info = MongoIndexInfo.index_info(collection, indexes[0])
+
+            # собираем список полей, которые участвуют в запросе
+            fields_in_query = []
+            if query_filter:
+                for field, _ in query_filter.items():
+                    fields_in_query.append(field)
+            if query_sort:
+                for field, _ in query_sort:
+                    fields_in_query.append(field)
+
+            # Список полей индекса и инфа о том, используется-ли это поле
+            index_coverage = []
+            _covered = True
+            _index_covered_fields = []  # список полей, которые покрыты индексом
+            for index_key, index_type in index_info:
+                if index_key not in fields_in_query:
+                    _covered = False  # если хоть одно поле пропустили, то дальше они уже не юзаются
+                index_coverage.append({
+                    'key': index_key,
+                    'type': index_type,
+                    'covered': _covered
+                })
+                if _covered:
+                    _index_covered_fields.append(index_key)
+            index_intel['index_coverage'] = index_coverage
+
+            # покрытие запроса к монге индексом
+            query_coverage = []
+            for query_key in fields_in_query:
+                _covered = query_key in _index_covered_fields
+                if not _covered:
+                    index_intel['state'] = 'PARTIAL'  # индекс частично покрыл запрос
+                query_coverage.append({
+                    'key': query_key,
+                    'covered': _covered
+                })
+            index_intel['query_coverage'] = query_coverage
+
+        elif len(indexes) == 0:
+            index_intel['state'] = 'NOT_USED'
+        else:
+            index_intel['state'] = 'WEIRD'  # использовалось несколько индексов -- разибарайся с ними сам
 
         result = {
+            'covered_by_index': 'FETCH' not in stage_types,  # покрыто индексом
             'sorted_in_memory': 'SORT' in stage_types,
+            'index_intel': index_intel,
             'raw': raw_explain,
-            'stages': list(stage_types),
-            'indexes': list(indexes)
+            'stages': stage_types,
+            'indexes': indexes,
         }
         return result

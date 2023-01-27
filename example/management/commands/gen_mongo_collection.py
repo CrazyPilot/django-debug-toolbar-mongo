@@ -27,5 +27,6 @@ class Command(BaseCommand):
             })
 
         collection.create_index([('name', 1)])
+        collection.create_index([('job.title', 1), ('age', 1)])
 
         print(f"DONE. Elements in collection: {collection.count_documents({})}")
