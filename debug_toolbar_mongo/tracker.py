@@ -222,7 +222,7 @@ class QueryTracker:
     def _analyze_raw_explain(raw_explain, collection: pymongo.collection.Collection, query_filter=None, query_sort=None):
         """
         COLLSCAN -- не нашли никакого индекса (плохо)
-        IXSCAN -- нашли индекс (надо проверить покрытие)
+        IXSCAN GEO_NEAR_2DSPHERE -- нашли индекс (надо проверить покрытие)
         SORT -- сортировка в памяти (плохо)
 
         When an index covers a query, the explain result has an IXSCAN stage that is not a descendant of a FETCH stage,
@@ -234,7 +234,7 @@ class QueryTracker:
         indexes = set()
         while stage:
             stage_types.add(stage['stage'])
-            if stage['stage'] == 'IXSCAN':
+            if stage['stage'] in ['IXSCAN', 'GEO_NEAR_2DSPHERE']:
                 indexes.add(stage['indexName'])
             stage = stage['inputStage'] if 'inputStage' in stage else None
         stage_types = list(stage_types)
