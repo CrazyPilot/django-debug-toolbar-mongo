@@ -26,4 +26,6 @@ class Command(BaseCommand):
                 }
             })
 
+        collection.create_index([('name', 1)])
+
         print(f"DONE. Elements in collection: {collection.count_documents({})}")
