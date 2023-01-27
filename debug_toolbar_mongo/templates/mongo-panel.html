@@ -47,7 +47,7 @@
       {% if explain_enabled %}
         <td>
           {{ query.explain.html|safe }}
-{#          <div><button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Expl</button></div>#}
+          <div><button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Raw data</button></div>
         </td>
       {% endif %}
     </tr>
