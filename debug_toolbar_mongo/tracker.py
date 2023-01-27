@@ -217,8 +217,23 @@ class QueryTracker:
         and in the executionStats, the
         explain.executionStats.totalDocsExamined is 0.
         """
-        # raw_explain['queryPlanner']['winningPlan']
+        stage = raw_explain['queryPlanner']['winningPlan']
+        stage_types = set()
+        indexes = set()
+        while stage:
+            stage_types.add(stage['stage'])
+            if stage['stage'] == 'IXSCAN':
+                indexes.add(stage['indexName'])
+            stage = stage['inputStage'] if 'inputStage' in stage else None
+
+        if len(indexes) == 1:
+            # TODO првоерить совпадение полей индекса и запроса
+            pass
+
         result = {
-            'raw': raw_explain
+            'sorted_in_memory': 'SORT' in stage_types,
+            'raw': raw_explain,
+            'stages': list(stage_types),
+            'indexes': list(indexes)
         }
         return result
