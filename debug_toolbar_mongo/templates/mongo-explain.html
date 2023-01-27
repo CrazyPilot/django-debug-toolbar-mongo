@@ -7,7 +7,7 @@
   <div>Index coverage:</div>
   <div>
     {% for key in index_intel.index_coverage %}
-      <span class="badge {% if key.covered %}green{% else %}grey{% endif %}">{{ key.key }} {{ key.type }}</span>
+      <span class="badge {% if key.covered %}green{% else %}grey{% endif %}">{{ key.key }}&nbsp;{{ key.type }}</span>
     {% endfor %}
   </div>
 
