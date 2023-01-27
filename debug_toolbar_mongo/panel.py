@@ -75,7 +75,8 @@ class MongoPanel(Panel):
     def generate_stats(self, request, response):
         # print('!! generate_stats')
         self.record_stats({
-            'queries': QueryTracker.queries
+            'queries': QueryTracker.queries,
+            'explain_enabled': getattr(settings, 'DEBUG_TOOLBAR_MONGO_EXPLAIN', False)
         })
 
     # def process_request(self, request):

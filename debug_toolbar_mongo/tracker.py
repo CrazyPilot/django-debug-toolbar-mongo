@@ -1,7 +1,21 @@
 import pymongo
 import time
 import bson.json_util
+from bson import SON
 
+from django.conf import settings
+
+
+EXPLAIN_ENABLED = getattr(settings, 'DEBUG_TOOLBAR_MONGO_EXPLAIN', False)
+
+
+def son_to_pymongo(son: SON):
+    if not son:
+        return None
+    result = []
+    for key, val in son.to_dict().items():
+        result.append((key, val))
+    return result
 
 
 class QueryTracker:
@@ -61,12 +75,22 @@ class QueryTracker:
         start_time = time.time()
         result = QueryTracker._original_methods[name](collection, filter, *args, **kwargs)
         total_time = (time.time() - start_time) * 1000
+
+        explain = {}
+        if EXPLAIN_ENABLED:
+            if name not in ['aggregate', 'insert_one', 'insert_many']:
+                QueryTracker.disable()
+                raw_explain = collection.find(filter).explain()
+                explain = QueryTracker._analyze_raw_explain(raw_explain)
+                QueryTracker.enable()
+
         QueryTracker.queries.append({
             'type': name,
             'collection': collection.full_name,
             'query': bson.json_util.dumps(filter),
             'comment': kwargs.get('comment'),
-            'time': total_time
+            'time': total_time,
+            'explain': explain
         })
         return result
 
@@ -119,12 +143,12 @@ class QueryTracker:
             QueryTracker._cur_refresh_query['time'] += total_time
         else:
             # это новый запрос - создаем его
-            QueryTracker._save_last_refresh_query()  # сохранили старый, если есть
+            QueryTracker._save_last_refresh_query(cursor)  # сохранили старый, если есть
             QueryTracker._new_refresh_query(cursor, total_time)
 
         # это последний кусок запроса и его нужно сохранить
         if not cursor.alive:
-            QueryTracker._save_last_refresh_query()  # сохранили старый, если есть
+            QueryTracker._save_last_refresh_query(cursor)  # сохранили старый, если есть
 
         return result
 
@@ -154,10 +178,47 @@ class QueryTracker:
         }
         QueryTracker._cur_refresh_query.update(QueryTracker._cursor_to_dict(cursor))
 
+
+
     @staticmethod
-    def _save_last_refresh_query():
+    def _save_last_refresh_query(cursor: pymongo.cursor.Cursor = None):
         if QueryTracker._cur_refresh_query:
+            # запускаем explain
+            explain = {}
+            if EXPLAIN_ENABLED and cursor:
+                QueryTracker.disable()
+                _query = cursor._Cursor__spec
+                _project = cursor._Cursor__projection
+                _sort = son_to_pymongo(cursor._Cursor__ordering)
+                _skip = cursor._Cursor__skip
+                _limit = cursor._Cursor__limit
+                _request = cursor.collection.find(_query, _project)
+                if _sort:
+                    _request = _request.sort(list(_sort))
+                raw_explain = _request.skip(_skip).limit(_limit).explain()
+                print(f" 🔍 Explain {cursor._Cursor__comment} {cursor._Cursor__spec}")
+                explain = QueryTracker._analyze_raw_explain(raw_explain)
+                QueryTracker.enable()
+            QueryTracker._cur_refresh_query['explain'] = explain
+
             # у нас осталась инфа про предыдущий запрос - надо его сохранить
             QueryTracker.queries.append(QueryTracker._cur_refresh_query)
             QueryTracker._cur_refresh_query = None
             QueryTracker._cur_refresh_cursor_hash = None
+
+    @staticmethod
+    def _analyze_raw_explain(raw_explain):
+        """
+        COLLSCAN -- не нашли никакого индекса (плохо)
+        IXSCAN -- нашли индекс (надо проверить покрытие)
+        SORT -- сортировка в памяти (плохо)
+
+        When an index covers a query, the explain result has an IXSCAN stage that is not a descendant of a FETCH stage,
+        and in the executionStats, the
+        explain.executionStats.totalDocsExamined is 0.
+        """
+        # raw_explain['queryPlanner']['winningPlan']
+        result = {
+            'raw': raw_explain
+        }
+        return result

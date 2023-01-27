@@ -9,7 +9,7 @@
       <th>Query</th>
       <th>Comment</th>
       <th>Time (ms)</th>
-      <th>Actions</th>
+      {% if explain_enabled %}<th>Explain</th>{% endif %}
     </tr>
   </thead>
   <tbody>
@@ -36,9 +36,11 @@
       </td>
       <td>{% if query.comment %}{{ query.comment }}{% endif %}</td>
       <td>{{ query.time|floatformat }}</td>
-      <td>
-        <button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Expl</button>
-      </td>
+      {% if explain_enabled %}
+        <td>
+          <button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Expl</button>
+        </td>
+      {% endif %}
     </tr>
   {% endfor %}
   </tbody>

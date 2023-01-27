@@ -4,6 +4,8 @@ SRC_DIR = os.path.dirname(__file__)
 
 DEBUG = True
 
+ROOT_URLCONF = 'example.urls'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -73,10 +75,10 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logging.LoggingPanel',
 )
 
-ROOT_URLCONF = 'example.urls'
-
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: True,
 }
+
+DEBUG_TOOLBAR_MONGO_EXPLAIN = True
 
 INTERNAL_IPS = ('127.0.0.1',)

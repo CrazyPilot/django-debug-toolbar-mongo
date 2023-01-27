@@ -3,7 +3,7 @@ import { $$ } from "../debug_toolbar/js/utils.js";
 let mongoExplain = (e) => {
     let target = e.target
     let query = window.djdtMongoQueries[target.dataset.queryIdx]
-    console.log(query)
+    console.log(query.explain)
 }
 
 function onRender() {
