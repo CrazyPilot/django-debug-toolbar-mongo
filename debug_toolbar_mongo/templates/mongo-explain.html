@@ -3,7 +3,7 @@
 {% elif index_intel.state == 'COMPLICATED' %}
   <div class="header yellow">Complicated query &mdash; investigate manually</div>
 {% else %}  {# OK или PARTIAL #}
-  <div class="header {% if index_intel.state == 'OK' %}green{% else %}yellow{% endif %}">{{ index_intel.name }}</div>
+  <div class="header {% if index_intel.state == 'OK' %}green{% else %}yellow{% endif %}" style="word-break: break-all">{{ index_intel.name }}</div>
   <div>Index coverage:</div>
   <div>
     {% for key in index_intel.index_coverage %}
