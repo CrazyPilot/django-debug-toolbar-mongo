@@ -29,7 +29,7 @@ def get_list(iterable):
 
 
 def index(request):
-    with section('find 1'):
+    with section('find one'):
         get_list(collection.find_one({'job.title': 'Developer'}, comment='find developers'))
 
     with section('count_documents'):
