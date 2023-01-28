@@ -4,8 +4,6 @@ import bson.json_util
 from bson import SON
 
 from django.conf import settings
-from django.template.loader import get_template
-from django.template import Context
 
 
 EXPLAIN_ENABLED = getattr(settings, 'DEBUG_TOOLBAR_MONGO_EXPLAIN', False)
@@ -84,6 +82,8 @@ class QueryTracker:
 
     @staticmethod
     def _profile_simple_op(name, collection: pymongo.collection.Collection, filter, *args, **kwargs):
+        QueryTracker._save_last_refresh_query()  # сохранили последний find, тк начался другой запрос
+
         start_time = time.time()
         result = QueryTracker._original_methods[name](collection, filter, *args, **kwargs)
         total_time = (time.time() - start_time) * 1000
@@ -94,6 +94,7 @@ class QueryTracker:
                 QueryTracker.disable()
                 raw_explain = collection.find(filter).explain()
                 explain = QueryTracker._analyze_raw_explain(raw_explain, collection, filter)
+                print(f" 🔍 Explain {collection.name}:{kwargs.get('comment', '')}")
                 QueryTracker.enable()
 
         QueryTracker.queries.append({
@@ -144,23 +145,27 @@ class QueryTracker:
 
     @staticmethod
     def _refresh(cursor: pymongo.cursor.Cursor):
+        cursor_hash = QueryTracker._cursor_to_hash(cursor)
+        if cursor_hash != QueryTracker._cur_refresh_cursor_hash:
+            # это новый запрос -- делаем эксплэйн до выполнения запроса
+            explain = QueryTracker._explain_last_refresh_query(cursor)
+
         start_time = time.time()
         result = QueryTracker._original_methods['refresh'](cursor)
         total_time = (time.time() - start_time) * 1000
-
-        cursor_hash = QueryTracker._cursor_to_hash(cursor)
 
         if cursor_hash == QueryTracker._cur_refresh_cursor_hash:
             # это продолжение запроса, увеличиваем таймер
             QueryTracker._cur_refresh_query['time'] += total_time
         else:
             # это новый запрос - создаем его
-            QueryTracker._save_last_refresh_query(cursor)  # сохранили старый, если есть
+            QueryTracker._save_last_refresh_query()  # сохранили старый, если есть
             QueryTracker._new_refresh_query(cursor, total_time)
+            QueryTracker._cur_refresh_query['explain'] = explain  # добавляем explain в инфу о новом запросе
 
         # это последний кусок запроса и его нужно сохранить
         if not cursor.alive:
-            QueryTracker._save_last_refresh_query(cursor)  # сохранили старый, если есть
+            QueryTracker._save_last_refresh_query()  # сохранили старый, если есть
 
         return result
 
@@ -190,33 +195,34 @@ class QueryTracker:
         }
         QueryTracker._cur_refresh_query.update(QueryTracker._cursor_to_dict(cursor))
 
-
-
     @staticmethod
-    def _save_last_refresh_query(cursor: pymongo.cursor.Cursor = None):
+    def _save_last_refresh_query():
         if QueryTracker._cur_refresh_query:
-            # запускаем explain
-            explain = {}
-            if EXPLAIN_ENABLED and cursor:
-                QueryTracker.disable()
-                _query = cursor._Cursor__spec
-                _project = cursor._Cursor__projection
-                _sort = son_to_pymongo(cursor._Cursor__ordering)
-                _skip = cursor._Cursor__skip
-                _limit = cursor._Cursor__limit
-                _request = cursor.collection.find(_query, _project)
-                if _sort:
-                    _request = _request.sort(list(_sort))
-                raw_explain = _request.skip(_skip).limit(_limit).explain()
-                print(f" 🔍 Explain {cursor._Cursor__comment} {cursor._Cursor__spec}")
-                explain = QueryTracker._analyze_raw_explain(raw_explain, cursor.collection, _query, _sort)
-                QueryTracker.enable()
-            QueryTracker._cur_refresh_query['explain'] = explain
-
             # у нас осталась инфа про предыдущий запрос - надо его сохранить
             QueryTracker.queries.append(QueryTracker._cur_refresh_query)
             QueryTracker._cur_refresh_query = None
             QueryTracker._cur_refresh_cursor_hash = None
+
+    @staticmethod
+    def _explain_last_refresh_query(cursor: pymongo.cursor.Cursor):
+        # запускаем explain
+        explain = {}
+        if EXPLAIN_ENABLED and cursor:
+            QueryTracker.disable()
+            _query = cursor._Cursor__spec
+            _project = cursor._Cursor__projection
+            _sort = son_to_pymongo(cursor._Cursor__ordering)
+            _skip = cursor._Cursor__skip
+            _limit = cursor._Cursor__limit
+            _request = cursor.collection.find(_query, _project)
+            if _sort:
+                _request = _request.sort(list(_sort))
+            raw_explain = _request.skip(_skip).limit(_limit).explain()
+            print(f" 🔍 Explain {cursor.collection.name}:{cursor._Cursor__comment}")
+            explain = QueryTracker._analyze_raw_explain(raw_explain, cursor.collection, _query, _sort)
+            QueryTracker.enable()
+        # QueryTracker._cur_refresh_query['explain'] = explain
+        return explain
 
     @staticmethod
     def _analyze_raw_explain(raw_explain, collection: pymongo.collection.Collection, query_filter=None, query_sort=None):
@@ -230,14 +236,14 @@ class QueryTracker:
         explain.executionStats.totalDocsExamined is 0.
         """
         stage = raw_explain['queryPlanner']['winningPlan']
-        stage_types = set()
+        stage_types = []  # этапы выполнения запроса
         indexes = set()
         while stage:
-            stage_types.add(stage['stage'])
+            stage_types.append(stage['stage'])
             if stage['stage'] in ['IXSCAN', 'GEO_NEAR_2DSPHERE']:
                 indexes.add(stage['indexName'])
             stage = stage['inputStage'] if 'inputStage' in stage else None
-        stage_types = list(stage_types)
+        stage_types.reverse()  # чтобы этапы шли по порядку
         indexes = list(indexes)
 
         index_intel = {}
@@ -298,8 +304,5 @@ class QueryTracker:
             'stages': stage_types,
             'indexes': indexes,
         }
-
-        tpl = get_template('mongo-explain.html')
-        result['html'] = tpl.render(result)
 
         return result

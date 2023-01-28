@@ -46,8 +46,38 @@
       </td>
       {% if explain_enabled %}
         <td>
-          {{ query.explain.html|safe }}
-          <div><button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Raw data</button></div>
+          {% if query.explain  %}
+            {# EXPLAIN #}
+            {% if query.explain.index_intel.state == 'NOT_USED' %}
+              <div class="header red">No index used!</div>
+            {% elif query.explain.index_intel.state == 'COMPLICATED' %}
+              <div class="header yellow">Complicated query &mdash; investigate manually</div>
+            {% else %}  {# OK или PARTIAL #}
+              <div class="header {% if query.explain.index_intel.state == 'OK' %}green{% else %}yellow{% endif %}" style="word-break: break-all">{{ query.explain.index_intel.name }}</div>
+              <div>
+                {% for stage in query.explain.stages %}
+                  <span class="badge {% if stage in "COLLSCAN,SORT" %}red{% else %}grey{% endif %}">{{ stage }}</span>
+                {% endfor %}
+              </div>
+              <div>Index coverage:</div>
+              <div>
+                {% for key in query.explain.index_intel.index_coverage %}
+                  <span class="badge {% if key.covered %}green{% else %}grey{% endif %}">{{ key.key }}&nbsp;{{ key.type }}</span>
+                {% endfor %}
+              </div>
+
+              <div>Query coverage:</div>
+              <div>
+                {% for key in query.explain.index_intel.query_coverage %}
+                  <span class="badge {% if key.covered %}green{% else %}red{% endif %}">{{ key.key }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {# END EXPLAIN #}
+            <div><button class="djdt-mongo-btn-explain" data-query-idx="{{ forloop.counter0 }}">Raw data</button></div>
+          {% else %}
+
+          {% endif %}
         </td>
       {% endif %}
     </tr>
@@ -76,7 +106,7 @@
   }
 
   #djDebug .badge {
-      padding: 1px 3px;
+      padding: 2px 5px;
       border-style: solid;
       border-width: 0px;
       border-radius: 4px;
