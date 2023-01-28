@@ -29,6 +29,9 @@ def get_list(iterable):
 
 
 def index(request):
+    with section('find 1'):
+        get_list(collection.find_one({'job.title': 'Developer'}, comment='find developers'))
+
     with section('count_documents'):
         with timer():
             collection.count_documents({'name': 'Alice'}, comment='count_documents')
@@ -60,7 +63,6 @@ def index(request):
 
     with section('find covered by index'):
         get_list(collection.find({'job.title': 'Developer'}, {'_id': 0, 'job.title': 1, 'age': 1}, comment='find covered by index').sort('age', -1))
-
 
     with section('find skip limit'):
         get_list(collection.find({'job.title': 'Developer'}, comment='find skip limit').skip(20).limit(50))
