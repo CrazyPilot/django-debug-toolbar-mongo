@@ -56,7 +56,7 @@
               <div class="header {% if query.explain.index_intel.state == 'OK' %}green{% else %}yellow{% endif %}" style="word-break: break-all">{{ query.explain.index_intel.name }}</div>
               <div>
                 {% for stage in query.explain.stages %}
-                  {% if query.type != 'find' and stage in "LIMIT" %}
+                  {% if query.type != 'find' and stage in "LIMIT,FETCH" %}
                     {# для не find запросов мы добавляем limit в explpain, чтобы ускорить процесс, но отображать его не нужно #}
                   {% else %}
                     <span class="badge {% if stage in "COLLSCAN,SORT" %}red{% else %}grey{% endif %}">{{ stage }}</span>
