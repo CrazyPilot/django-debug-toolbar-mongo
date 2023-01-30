@@ -92,8 +92,14 @@ class QueryTracker:
         if EXPLAIN_ENABLED:
             if name not in ['aggregate', 'insert_one', 'insert_many']:
                 QueryTracker.disable()
-                # limit добавил тут, чтобы запрос выполнился быстрее
-                raw_explain = collection.find(filter).limit(100).explain()
+
+                # это вариант, когда мы вместо нужного запроса запускаем похожий на нег find
+                # # limit добавил тут, чтобы запрос выполнился быстрее
+                # raw_explain = collection.find(filter).limit(100).explain()
+
+                # а это мы делаем честный explain
+                raw_explain = collection.database.command({'count': collection.name, 'explain': True}, filter, )
+
                 explain = QueryTracker._analyze_raw_explain(raw_explain, collection, filter)
                 print(f" 🔍 Explain {collection.name}:{kwargs.get('comment', '')}")
                 QueryTracker.enable()

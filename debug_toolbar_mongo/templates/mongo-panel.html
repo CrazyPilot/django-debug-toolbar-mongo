@@ -54,13 +54,13 @@
               <div class="header yellow">Complicated query &mdash; investigate manually</div>
             {% else %}  {# OK или PARTIAL #}
               <div class="header {% if query.explain.index_intel.state == 'OK' %}green{% else %}yellow{% endif %}" style="word-break: break-all">{{ query.explain.index_intel.name }}</div>
-              {% if query.type == 'find' %}
+{#              {% if query.type == 'find' %}#}
                 <div>
                   {% for stage in query.explain.stages %}
                     <span class="badge {% if stage in "COLLSCAN,SORT" %}red{% else %}grey{% endif %}">{{ stage }}</span>
                   {% endfor %}
                 </div>
-              {% endif %}
+{#              {% endif %}#}
               <div>Index coverage:</div>
               <div>
                 {% for key in query.explain.index_intel.index_coverage %}
