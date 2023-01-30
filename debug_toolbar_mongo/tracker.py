@@ -103,6 +103,7 @@ class QueryTracker:
             'collection': collection.full_name,
             'query': bson.json_util.dumps(filter),
             'comment': kwargs.get('comment'),
+            'hint': kwargs.get('hint'),
             'time': total_time,
             'explain': explain
         })

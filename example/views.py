@@ -34,7 +34,7 @@ def index(request):
 
     with section('count_documents'):
         with timer():
-            collection.count_documents({'name': 'Alice', "job.title": "Developer"}, comment='count_documents')
+            collection.count_documents({'name': 'Alice', "job.title": "Developer"}, comment='count_documents', hint='name_1')
 
     with section('find 1'):
         get_list(collection.find({'name': 'Alice'}, comment='find 1'))
