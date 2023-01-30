@@ -32,6 +32,9 @@
           {% if query.limit %}
             <tr><td class="muted">Limit</td><td>{{ query.limit }}</td></tr>
           {% endif %}
+        {% if query.hint %}
+            <tr><td class="muted">Hint</td><td>{{ query.hint }}</td></tr>
+          {% endif %}
         </table>
       </td>
       <td>

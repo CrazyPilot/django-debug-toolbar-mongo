@@ -39,8 +39,8 @@ def index(request):
     with section('find 1'):
         get_list(collection.find({'name': 'Alice'}, comment='find 1'))
 
-    with section('find 2'):
-        get_list(collection.find({'name': 'Alice'}, comment='find 2'))
+    with section('find hint'):
+        get_list(collection.find({'name': 'Alice'}, comment='find hint').hint('name_1'))
 
     with section('find one'):
         with timer():

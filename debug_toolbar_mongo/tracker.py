@@ -180,6 +180,7 @@ class QueryTracker:
             'skip': cursor._Cursor__skip,
             'limit': cursor._Cursor__limit,
             'comment': cursor._Cursor__comment,
+            'hint': cursor._Cursor__hint,
         }
 
     @staticmethod
@@ -215,9 +216,12 @@ class QueryTracker:
             _sort = son_to_pymongo(cursor._Cursor__ordering)
             _skip = cursor._Cursor__skip
             _limit = cursor._Cursor__limit
+            _hint = cursor._Cursor__hint
             _request = cursor.collection.find(_query, _project)
             if _sort:
                 _request = _request.sort(list(_sort))
+            if _hint:
+                _request = _request.hint(_hint)
             raw_explain = _request.skip(_skip).limit(_limit).explain()
             print(f" 🔍 Explain {cursor.collection.name}:{cursor._Cursor__comment}")
             explain = QueryTracker._analyze_raw_explain(raw_explain, cursor.collection, _query, _sort)
