@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "django-debug-toolbar-mongo"
 version = "1.0.13"
-description = ""  # sdfag11
+description = ""  # sdfag1122
 authors = ["Antonio <mr.antonsilin@gmail.com>"]
 readme = "README.md"
 packages = [{include = "debug_toolbar_mongo"}]
