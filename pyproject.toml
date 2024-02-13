@@ -8,10 +8,10 @@ packages = [{include = "debug_toolbar_mongo"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Django = "^4.1.1"
-pymongo = "^4.2.0"
+Django = "*"
+pymongo = "*"
 django-debug-toolbar = ">=3.6.0,<5"
-tqdm = "^4.64.1"
+tqdm = "*"
 
 
 [build-system]
