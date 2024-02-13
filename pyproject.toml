@@ -14,6 +14,9 @@ django-debug-toolbar = ">=3.6.0,<5"
 tqdm = "*"
 
 
+[tool.poetry.group.dev.dependencies]
+antonio-py-dynamic-version = {git = "https://bitbucket.org/asilin/antonio-py-dynamic-version.git"}
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
