@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-debug-toolbar-mongo"
-version = "1.0.16"  # set by antonio-py-dynamic-version
+version = "1.0.17"  # set by antonio-py-dynamic-version
 description = "MongoDB panel for Django Debug Toolbar"
 authors = ["Antonio <mr.antonsilin@gmail.com>"]
 readme = "README.md"
@@ -9,7 +9,7 @@ packages = [{include = "debug_toolbar_mongo"}]
 [tool.poetry.dependencies]
 python = "^3.8"
 Django = "*"
-pymongo = "*"
+pymongo = ">=4.7"
 django-debug-toolbar = ">=3.6.0,<5"
 tqdm = "*"
 
