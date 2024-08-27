@@ -176,11 +176,18 @@ class QueryTracker:
 
     @staticmethod
     def _cursor_to_dict(cursor):
+        if type(cursor._Cursor__ordering) is dict:
+            ordering = cursor._Cursor__ordering
+        elif cursor._Cursor__ordering:
+            ordering = cursor._Cursor__ordering.to_dict()  # It works for pymongo < 4.7
+        else:
+            ordering = None
         return {
             'collection': cursor.collection.full_name,
             'query': bson.json_util.dumps(cursor._Cursor__spec),
             'projection': cursor._Cursor__projection,
-            'ordering': cursor._Cursor__ordering.to_dict() if cursor._Cursor__ordering else cursor._Cursor__ordering,
+            # 'ordering': cursor._Cursor__ordering.to_dict() if cursor._Cursor__ordering else cursor._Cursor__ordering,
+            'ordering': ordering,
             'skip': cursor._Cursor__skip,
             'limit': cursor._Cursor__limit,
             'comment': cursor._Cursor__comment,
