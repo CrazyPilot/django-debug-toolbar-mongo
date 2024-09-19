@@ -1,7 +1,7 @@
 import pymongo
+from pymongo.synchronous.collection import Collection
 import time
 import bson.json_util
-from bson import SON
 
 from django.conf import settings
 
@@ -22,7 +22,7 @@ class MongoIndexInfo:
     collections = {}
 
     @classmethod
-    def index_info(cls, collection: pymongo.collection.Collection, index_name):
+    def index_info(cls, collection: Collection, index_name):
         if collection.name not in cls.collections:
             cls.collections[collection.name] = collection.index_information()
         return cls.collections[collection.name][index_name]['key']
@@ -32,15 +32,15 @@ class QueryTracker:
 
     _original_methods = {
         'refresh': pymongo.cursor.Cursor._refresh,
-        'count_documents': pymongo.collection.Collection.count_documents,
-        'insert_one': pymongo.collection.Collection.insert_one,
-        'insert_many': pymongo.collection.Collection.insert_many,
-        'update_one': pymongo.collection.Collection.update_one,
-        'update_many': pymongo.collection.Collection.update_many,
-        'replace_one': pymongo.collection.Collection.replace_one,
-        'delete_one': pymongo.collection.Collection.delete_one,
-        'delete_many': pymongo.collection.Collection.delete_many,
-        'aggregate': pymongo.collection.Collection.aggregate,
+        'count_documents': Collection.count_documents,
+        'insert_one': Collection.insert_one,
+        'insert_many': Collection.insert_many,
+        'update_one': Collection.update_one,
+        'update_many': Collection.update_many,
+        'replace_one': Collection.replace_one,
+        'delete_one': Collection.delete_one,
+        'delete_many': Collection.delete_many,
+        'aggregate': Collection.aggregate,
     }
 
     queries = []
@@ -51,28 +51,28 @@ class QueryTracker:
     @staticmethod
     def enable():
         pymongo.cursor.Cursor._refresh = QueryTracker._refresh
-        pymongo.collection.Collection.count_documents = QueryTracker._count_documents
-        pymongo.collection.Collection.insert_one = QueryTracker._insert_one
-        pymongo.collection.Collection.insert_many = QueryTracker._insert_many
-        pymongo.collection.Collection.update_one = QueryTracker._update_one
-        pymongo.collection.Collection.update_many = QueryTracker._update_many
-        pymongo.collection.Collection.replace_one = QueryTracker._replace_one
-        pymongo.collection.Collection.delete_one = QueryTracker._delete_one
-        pymongo.collection.Collection.delete_many = QueryTracker._delete_many
-        pymongo.collection.Collection.aggregate = QueryTracker._aggregate
+        Collection.count_documents = QueryTracker._count_documents
+        Collection.insert_one = QueryTracker._insert_one
+        Collection.insert_many = QueryTracker._insert_many
+        Collection.update_one = QueryTracker._update_one
+        Collection.update_many = QueryTracker._update_many
+        Collection.replace_one = QueryTracker._replace_one
+        Collection.delete_one = QueryTracker._delete_one
+        Collection.delete_many = QueryTracker._delete_many
+        Collection.aggregate = QueryTracker._aggregate
 
     @staticmethod
     def disable():
         pymongo.cursor.Cursor._refresh = QueryTracker._original_methods['refresh']
-        pymongo.collection.Collection.count_documents = QueryTracker._original_methods['count_documents']
-        pymongo.collection.Collection.insert_one = QueryTracker._original_methods['insert_one']
-        pymongo.collection.Collection.insert_many = QueryTracker._original_methods['insert_many']
-        pymongo.collection.Collection.update_one = QueryTracker._original_methods['update_one']
-        pymongo.collection.Collection.update_many = QueryTracker._original_methods['update_many']
-        pymongo.collection.Collection.replace_one = QueryTracker._original_methods['replace_one']
-        pymongo.collection.Collection.delete_one = QueryTracker._original_methods['delete_one']
-        pymongo.collection.Collection.delete_many = QueryTracker._original_methods['delete_many']
-        pymongo.collection.Collection.aggregate = QueryTracker._original_methods['aggregate']
+        Collection.count_documents = QueryTracker._original_methods['count_documents']
+        Collection.insert_one = QueryTracker._original_methods['insert_one']
+        Collection.insert_many = QueryTracker._original_methods['insert_many']
+        Collection.update_one = QueryTracker._original_methods['update_one']
+        Collection.update_many = QueryTracker._original_methods['update_many']
+        Collection.replace_one = QueryTracker._original_methods['replace_one']
+        Collection.delete_one = QueryTracker._original_methods['delete_one']
+        Collection.delete_many = QueryTracker._original_methods['delete_many']
+        Collection.aggregate = QueryTracker._original_methods['aggregate']
 
     @staticmethod
     def reset():
@@ -81,7 +81,7 @@ class QueryTracker:
         QueryTracker._cur_refresh_cursor_hash = None
 
     @staticmethod
-    def _profile_simple_op(name, collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _profile_simple_op(name, collection: Collection, filter, *args, **kwargs):
         QueryTracker._save_last_refresh_query()  # сохранили последний find, тк начался другой запрос
 
         start_time = time.time()
@@ -113,39 +113,39 @@ class QueryTracker:
         return result
 
     @staticmethod
-    def _count_documents(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _count_documents(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('count_documents', collection, filter, *args, **kwargs)
 
     @staticmethod
-    def _insert_one(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _insert_one(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('insert_one', collection, filter, *args, **kwargs)
 
     @staticmethod
-    def _insert_many(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _insert_many(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('insert_many', collection, filter, *args, **kwargs)
 
     @staticmethod
-    def _update_one(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _update_one(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('update_one', collection, filter, *args, **kwargs)
 
     @staticmethod
-    def _update_many(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _update_many(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('update_many', collection, filter, *args, **kwargs)
 
     @staticmethod
-    def _replace_one(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _replace_one(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('replace_one', collection, filter, *args, **kwargs)
 
     @staticmethod
-    def _delete_one(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _delete_one(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('delete_one', collection, filter, *args, **kwargs)
 
     @staticmethod
-    def _delete_many(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _delete_many(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('delete_many', collection, filter, *args, **kwargs)
 
     @staticmethod
-    def _aggregate(collection: pymongo.collection.Collection, filter, *args, **kwargs):
+    def _aggregate(collection: Collection, filter, *args, **kwargs):
         return QueryTracker._profile_simple_op('aggregate', collection, filter, *args, **kwargs)
 
     @staticmethod
@@ -184,15 +184,15 @@ class QueryTracker:
         #     ordering = None
         return {
             'collection': cursor.collection.full_name,
-            'query': bson.json_util.dumps(cursor._Cursor__spec),
-            'projection': cursor._Cursor__projection,
+            'query': bson.json_util.dumps(cursor._spec),
+            'projection': cursor._projection,
             # 'ordering': cursor._Cursor__ordering.to_dict() if cursor._Cursor__ordering else cursor._Cursor__ordering,
             # 'ordering': ordering,
-            'ordering': cursor._Cursor__ordering,
-            'skip': cursor._Cursor__skip,
-            'limit': cursor._Cursor__limit,
-            'comment': cursor._Cursor__comment,
-            'hint': cursor._Cursor__hint,
+            'ordering': cursor._ordering,
+            'skip': cursor._skip,
+            'limit': cursor._limit,
+            'comment': cursor._comment,
+            'hint': cursor._hint,
         }
 
     @staticmethod
@@ -223,26 +223,26 @@ class QueryTracker:
         explain = {}
         if EXPLAIN_ENABLED and cursor:
             QueryTracker.disable()
-            _query = cursor._Cursor__spec
-            _project = cursor._Cursor__projection
-            _sort = cursor._Cursor__ordering
-            _skip = cursor._Cursor__skip
-            _limit = cursor._Cursor__limit
-            _hint = cursor._Cursor__hint
+            _query = cursor._spec
+            _project = cursor._projection
+            _sort = cursor._ordering
+            _skip = cursor._skip
+            _limit = cursor._limit
+            _hint = cursor._hint
             _request = cursor.collection.find(_query, _project)
             if _sort:
                 _request = _request.sort(_sort)  # _request.sort(list(_sort))
             if _hint:
                 _request = _request.hint(_hint)
             raw_explain = _request.skip(_skip).limit(_limit).explain()
-            print(f" 🔍 Explain {cursor.collection.name}:{cursor._Cursor__comment}")
+            print(f" 🔍 Explain {cursor.collection.name}:{cursor._comment}")
             explain = QueryTracker._analyze_raw_explain(raw_explain, cursor.collection, _query, _sort)
             QueryTracker.enable()
         # QueryTracker._cur_refresh_query['explain'] = explain
         return explain
 
     @staticmethod
-    def _analyze_raw_explain(raw_explain, collection: pymongo.collection.Collection, query_filter=None, query_sort=None):
+    def _analyze_raw_explain(raw_explain, collection: Collection, query_filter=None, query_sort=None):
         """
         COLLSCAN -- не нашли никакого индекса (плохо)
         IXSCAN GEO_NEAR_2DSPHERE -- нашли индекс (надо проверить покрытие)
