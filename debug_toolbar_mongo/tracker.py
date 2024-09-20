@@ -1,6 +1,7 @@
 import pymongo
 from pymongo.synchronous.collection import Collection
 import time
+import json
 import bson.json_util
 
 from django.conf import settings
@@ -256,7 +257,12 @@ class QueryTracker:
         stage_types = []  # этапы выполнения запроса
         indexes = set()
         while stage:
-            stage_types.append(stage['queryPlan']['stage'] if 'queryPlan' in stage else stage['stage'])
+            if 'queryPlan' in stage:
+                print("=== Weird winningPlan structure ===")
+                print(json.dumps(raw_explain['queryPlanner']['winningPlan'], indent=2))
+                print("=== /Weird winningPlan structure ===")
+                stage = stage['queryPlan']
+            stage_types.append(stage['stage'])
             if stage['stage'] in ['IXSCAN', 'GEO_NEAR_2DSPHERE']:
                 indexes.add(stage['indexName'])
             stage = stage['inputStage'] if 'inputStage' in stage else None
