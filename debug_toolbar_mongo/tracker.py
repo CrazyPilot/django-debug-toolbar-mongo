@@ -256,7 +256,7 @@ class QueryTracker:
         stage_types = []  # этапы выполнения запроса
         indexes = set()
         while stage:
-            stage_types.append(stage['stage'])
+            stage_types.append(stage['queryPlan']['stage'] if 'queryPlan' in stage else stage['stage'])
             if stage['stage'] in ['IXSCAN', 'GEO_NEAR_2DSPHERE']:
                 indexes.add(stage['indexName'])
             stage = stage['inputStage'] if 'inputStage' in stage else None
