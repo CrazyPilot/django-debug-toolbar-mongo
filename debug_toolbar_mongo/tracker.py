@@ -256,12 +256,13 @@ class QueryTracker:
         stage = raw_explain['queryPlanner']['winningPlan']
         stage_types = []  # этапы выполнения запроса
         indexes = set()
+        if 'queryPlan' in stage:
+            # это только в корне может быть такая структура, т.к. добавляется slotBasedPlan
+            # print("=== Weird winningPlan structure ===")
+            # print(json.dumps(raw_explain['queryPlanner']['winningPlan'], indent=2))
+            # print("=== /Weird winningPlan structure ===")
+            stage = stage['queryPlan']
         while stage:
-            if 'queryPlan' in stage:
-                print("=== Weird winningPlan structure ===")
-                print(json.dumps(raw_explain['queryPlanner']['winningPlan'], indent=2))
-                print("=== /Weird winningPlan structure ===")
-                stage = stage['queryPlan']
             stage_types.append(stage['stage'])
             if stage['stage'] in ['IXSCAN', 'GEO_NEAR_2DSPHERE']:
                 indexes.add(stage['indexName'])
