@@ -1,11 +1,35 @@
 from django import template
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 
 import pprint
 import os
+import bson.json_util
 
 register = template.Library()
+
+@register.filter(is_safe=True)
+def json_script_bson(value, element_id=None):
+    """
+    Output value JSON-encoded, wrapped in a <script type="application/json">
+    tag (with an optional id).
+    """
+    _json_script_escapes = {
+        ord(">"): "\\u003E",
+        ord("<"): "\\u003C",
+        ord("&"): "\\u0026",
+    }
+
+    json_str = bson.json_util.dumps(value).translate(
+        _json_script_escapes
+    )
+    if element_id:
+        template = '<script id="{}" type="application/json">{}</script>'
+        args = (element_id, mark_safe(json_str))
+    else:
+        template = '<script type="application/json">{}</script>'
+        args = (mark_safe(json_str),)
+    return format_html(template, *args)
 
 @register.filter
 def format_stack_trace(value):

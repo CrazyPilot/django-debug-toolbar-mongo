@@ -93,7 +93,7 @@
   <p>No queries recorded</p>
 {% endif %}
 
-{{ queries|json_script:'djdt-mongo-json-queries' }}
+{{ queries|json_script_bson:'djdt-mongo-json-queries' }}
 
 <style>
   #djDebug table.inner td.muted {

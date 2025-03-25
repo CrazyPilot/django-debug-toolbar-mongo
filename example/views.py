@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import time
 import pymongo
 from pymongo import MongoClient
+from bson import ObjectId
 
 
 collection = MongoClient(settings.MONGO_CONN)[settings.MONGO_DB][settings.MONGO_COLLECTION]
@@ -51,6 +52,9 @@ def index(request):
 
     with section('find all'):
         get_list(collection.find(comment='find all'))
+
+    with section('bson test all'):
+        get_list(collection.find({'job.title': ObjectId('6639de8ba4ec661eea12de0d')}, comment='bson test'))
 
     with section('find ordered'):
         get_list(collection.find({'job.title': 'Developer'}, comment='find ordered').sort('age', -1))
